@@ -6,6 +6,7 @@ import type { ChiTietTien } from '../core/tinh-tien.ts'
 import { taoDichVuMau } from './dich-vu.ts'
 import FormChotTien from './FormChotTien.tsx'
 import { docNgay, hienNgay, hienTien, homNayIso } from './dinh-dang.ts'
+import ManDanhSach from './ManDanhSach.tsx'
 
 const LOC: Array<NhanPhieu | 'Tất cả'> = ['Tất cả', 'Chưa tính tiền', 'Chờ trả khách', 'Đã trả']
 const TEN_PHUONG_THUC: Record<PhuongThuc, string> = {
@@ -87,6 +88,7 @@ export default function App() {
           ))}
         </ul>
       )}
+      <ManDanhSach phieus={ds} homNay={homNayIso()} />
     </main>
   )
 }
