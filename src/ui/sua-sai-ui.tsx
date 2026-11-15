@@ -261,6 +261,7 @@ const TEN_LOAI: Record<NhatKyPhieu['loai'], string> = {
   'xoa-mem': 'Xóa mềm',
   'lui-ngay': 'Lùi ngày',
   'thay-the': 'Thay thế',
+  'nhap-lo': 'Nhập lô từ sổ',
   'doi-cai-dat': 'Đổi cài đặt',
   'doi-nguoi-dung': 'Đổi người dùng',
 }

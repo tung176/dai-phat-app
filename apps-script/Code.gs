@@ -21,7 +21,7 @@ var MIN_SECRET = 12;
 // 'Dịch vụ' và 'Dòng phiếu' đã tạo sẵn (chỉ có dòng tiêu đề) cho ticket sau; hiện chi tiết tiền nằm ở cột JSON của tab Phiếu.
 var TABS = {
   'Phiếu': ['Mã phiếu', 'Mã khách', 'Ngày nhận', 'Mô tả', 'Ghi chú', 'Tổng tiền', 'Ngày trả',
-    'Phương thức', 'Trạng thái', 'Chi tiết tiền', 'Cập nhật lúc', 'Đã xóa', 'Thay thế cho', 'Thay bằng'],
+    'Phương thức', 'Trạng thái', 'Chi tiết tiền', 'Cập nhật lúc', 'Đã xóa', 'Thay thế cho', 'Thay bằng', 'Khóa nhập lô'],
   'Khách': ['Mã khách', 'Tên', 'Vị trí', 'Số điện thoại', 'Đồng ý nhận tin', 'Nguồn', 'Ngày tạo',
     'Gộp vào', 'Cập nhật lúc'],
   'Dịch vụ': ['Mã dịch vụ', 'Tên', 'Đơn vị', 'Đơn giá', 'Cập nhật lúc'],

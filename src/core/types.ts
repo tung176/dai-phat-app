@@ -39,6 +39,8 @@ export interface BanGhiPhieu {
   thayTheCho?: string
   /** Ticket 05: phiếu này đã được thay bằng phiếu mới có mã này. */
   thayTheBoi?: string
+  /** Ticket 09: khóa ổn định của dòng sổ đã sinh ra phiếu này ("lô:mã dòng"), để nhập lại không trùng. */
+  khoaNhapLo?: string
 }
 
 export interface Phieu extends BanGhiPhieu {

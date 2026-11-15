@@ -13,6 +13,7 @@ import { CAI_DAT_MAC_DINH, type CongTacChucNang } from '../core/nhat-ky-phieu.ts
 import type { DichVuSuaSai } from '../core/sua-sai-service.ts'
 import { docNgay, hienNgay, hienTien, homNayIso } from './dinh-dang.ts'
 import ManDanhSach from './ManDanhSach.tsx'
+import { ManNhapLo } from './nhap-lo-ui.tsx'
 
 const LOC: Array<NhanPhieu | 'Tất cả'> = ['Tất cả', 'Chưa tính tiền', 'Chờ trả khách', 'Đã trả', 'Đã hủy']
 const TEN_PHUONG_THUC: Record<PhuongThuc, string> = {
@@ -29,7 +30,7 @@ export default function App() {
   const he = kn.he
   const dv: DichVuPhieu = he.phieu
   const [moCaiDat, setMoCaiDat] = useState(false)
-  const [man, setMan] = useState<'phieu' | 'khach' | 'xem-lai' | 'cai-dat'>('phieu')
+  const [man, setMan] = useState<'phieu' | 'khach' | 'xem-lai' | 'cai-dat' | 'nhap-lo'>('phieu')
   const [ds, setDs] = useState<Phieu[]>([])
   const [loc, setLoc] = useState<NhanPhieu | 'Tất cả'>('Tất cả')
   const [loi, setLoi] = useState('')
@@ -93,6 +94,9 @@ export default function App() {
         <button type="button" aria-pressed={man === 'khach'} onClick={() => setMan('khach')}>
           Khách
         </button>
+        <button type="button" aria-pressed={man === 'nhap-lo'} onClick={() => setMan('nhap-lo')}>
+          Nhập lô từ sổ
+        </button>
         <button type="button" aria-pressed={man === 'xem-lai'} onClick={() => setMan('xem-lai')}>
           Xem lại thay đổi
           {chuaXem > 0 && (
@@ -108,6 +112,7 @@ export default function App() {
       {man === 'khach' && (
         <ManHinhKhach khach={he.khach} onDoi={() => void dv.danhSach().then(setDs)} />
       )}
+      {man === 'nhap-lo' && <ManNhapLo nhapLo={he.nhapLo} onDoi={docLai} />}
       {man === 'xem-lai' && <ManXemLai suaSai={he.suaSai} onDoi={() => void lamMoiGiamSat(he)} />}
       {man === 'cai-dat' && <ManCaiDatSuaSai suaSai={he.suaSai} onDoi={() => void lamMoiGiamSat(he)} />}
       {man === 'phieu' && loi && (
