@@ -264,6 +264,7 @@ const TEN_LOAI: Record<NhatKyPhieu['loai'], string> = {
   'nhap-lo': 'Nhập lô từ sổ',
   'doi-cai-dat': 'Đổi cài đặt',
   'doi-nguoi-dung': 'Đổi người dùng',
+  'doi-dong-y-nhan-tin': 'Đổi đồng ý nhận tin',
 }
 
 /** Màn "Xem lại thay đổi" theo tuần. Nhật ký chỉ đọc; "đã xem" lưu riêng. */

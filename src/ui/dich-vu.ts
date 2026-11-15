@@ -12,6 +12,7 @@ import type { DongBoSheets } from '../core/dong-bo-sheets.ts'
 import type { BanGhiKhach, NhatKyGop } from '../core/khach.ts'
 import type { BanGhiPhieu } from '../core/types.ts'
 import type { DongCaiDatPhieu, DongDaXem, DongNhatKyPhieu } from '../core/dong-nhat-ky-phieu.ts'
+import { taoDichVuNhomKhach, type DichVuNhomKhach } from '../core/nhom-khach-service.ts'
 import { taoLuuCauHinh } from '../core/luu-cau-hinh.ts'
 import { batDongBoTuDong } from './dong-bo-tu-dong.ts'
 
@@ -22,6 +23,8 @@ export interface HeThongDichVu {
   suaSai: DichVuSuaSai
   /** Ticket 09: nhập lô từ sổ. */
   nhapLo: DichVuNhapLo
+  /** Ticket 10: nhóm khách và danh sách nhắn tin. */
+  nhomKhach: DichVuNhomKhach
 }
 
 /**
@@ -41,6 +44,12 @@ export async function taoDichVuMau(): Promise<HeThongDichVu> {
     khoCaiDat: taoKhoCaiDatTrongBoNho(),
   })
   const nhapLo = taoDichVuNhapLo({ kho, phieu: dv, khach, suaSai, khoNhatKy })
+  const nhomKhach = taoDichVuNhomKhach({
+    khach,
+    phieu: dv,
+    khoNhatKy,
+    nguoiHienTai: () => suaSai.nguoiHienTai(),
+  })
   await dv.nhanDo({ tenKhach: 'Khách Mẫu A', ngayNhan: '2026-11-01', moTa: '1 túi quần áo', ghiChu: 'tầng 2' })
   const b = await dv.nhanDo({ tenKhach: 'Khách Mẫu B', ngayNhan: '2026-11-02', moTa: '2 chăn' })
   await dv.chotTien(b.id, 100000)
@@ -57,7 +66,7 @@ export async function taoDichVuMau(): Promise<HeThongDichVu> {
     ],
     phuThu: [{ soTien: 5000, ghiChu: '+5K' }],
   })
-  return { phieu: dv, khach, suaSai, nhapLo }
+  return { phieu: dv, khach, suaSai, nhapLo, nhomKhach }
 }
 
 export interface KetNoiSheets {
@@ -97,7 +106,13 @@ export function taoDichVuThat(): KetNoiSheets {
       khoCaiDat: kho.caiDatPhieu,
     })
     const nhapLo = taoDichVuNhapLo({ kho: kho.phieu, phieu, khach, suaSai, khoNhatKy: kho.nhatKyPhieu })
-    ketNoi = { he: { phieu, khach, suaSai, nhapLo }, dongBo: kho.dongBo, luu }
+    const nhomKhach = taoDichVuNhomKhach({
+      khach,
+      phieu,
+      khoNhatKy: kho.nhatKyPhieu,
+      nguoiHienTai: () => suaSai.nguoiHienTai(),
+    })
+    ketNoi = { he: { phieu, khach, suaSai, nhapLo, nhomKhach }, dongBo: kho.dongBo, luu }
   }
   return ketNoi
 }

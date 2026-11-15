@@ -19,6 +19,7 @@ export type LoaiThaoTac =
   | 'nhap-lo'
   | 'doi-cai-dat'
   | 'doi-nguoi-dung'
+  | 'doi-dong-y-nhan-tin'
 
 export type QuyTacBatThuong =
   | 'sua-tien-hoac-phuong-thuc-da-tra'
