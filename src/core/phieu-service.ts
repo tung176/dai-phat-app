@@ -2,6 +2,7 @@ import { taoDichVuKhach, type DichVuKhach } from './khach-service.ts'
 import type { Khach } from './khach.ts'
 import { taoKhoKhachTrongBoNho } from './kho-khach.ts'
 import type { KhoPhieu } from './kho-phieu.ts'
+import { tinhChiTiet, type ChiTietTien } from './tinh-tien.ts'
 import {
   LoiNghiepVu,
   type BanGhiPhieu,
@@ -28,7 +29,8 @@ export interface DauVaoTraKhach {
 
 export interface DichVuPhieu {
   nhanDo(dauVao: DauVaoNhanDo): Promise<Phieu>
-  chotTien(id: string, tongTien: number): Promise<Phieu>
+  /** tongTien là tổng tiền theo sổ. Có chiTiet thì lưu kèm dòng dịch vụ; chiTiet.chon = 'tinh' lấy số tính được. */
+  chotTien(id: string, tongTien: number, chiTiet?: ChiTietTien): Promise<Phieu>
   traKhach(id: string, dauVao: DauVaoTraKhach): Promise<Phieu>
   danhSach(): Promise<Phieu[]>
 }
@@ -105,12 +107,18 @@ export function taoDichVuPhieu(phuThuoc: { kho: KhoPhieu; khach?: DichVuKhach })
       })
       return xemDayDu(banGhi)
     },
-    async chotTien(id, tongTien) {
+    async chotTien(id, tongTien, chiTiet) {
       const b = await layHoacBao(id)
       if (b.trangThai !== 'chua-thanh-toan') {
         throw new LoiNghiepVu('SAI_TRANG_THAI', 'Chỉ chốt tiền được khi phiếu chưa thanh toán.')
       }
       batBuoc(Number.isInteger(tongTien) && tongTien > 0, 'Tổng tiền phải là số đồng nguyên dương.')
+      if (chiTiet) {
+        const luu: ChiTietTien = { ...chiTiet, tongTienSo: tongTien }
+        const moiCoChiTiet: BanGhiPhieu = { ...b, tongTien: tinhChiTiet(luu).tongChot, chiTietTien: luu }
+        await kho.ghi(moiCoChiTiet)
+        return xemDayDu(moiCoChiTiet)
+      }
       const moi: BanGhiPhieu = { ...b, tongTien }
       await kho.ghi(moi)
       return xemDayDu(moi)

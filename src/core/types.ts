@@ -1,3 +1,5 @@
+import type { ChiTietTien } from './tinh-tien.ts'
+
 /** Ngày dạng ISO "YYYY-MM-DD". Hiển thị dd/mm/yyyy là việc của lớp giao diện. */
 export type NgayIso = string
 
@@ -27,6 +29,8 @@ export interface BanGhiPhieu {
   moTa: string
   ghiChu?: string
   tongTien?: number
+  /** Dòng dịch vụ, phụ thu, giảm giá lúc chốt tiền (tùy chọn, ticket 03). */
+  chiTietTien?: ChiTietTien
   ngayTra?: NgayIso
   phuongThuc?: PhuongThuc
   trangThai: TrangThai
