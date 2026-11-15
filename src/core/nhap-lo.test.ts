@@ -28,6 +28,7 @@ describe('phân loại dòng sổ', () => {
     ['có dấu mà thiếu ngày trả', { tien: 1000, chuyenKhoan: true }],
     ['ngày trả trước ngày nhận', { tien: 1000, ngayTra: '2026-11-01', tienMat: true }],
     ['ô không chắc về tiền', { khongChac: ['tien' as const] }],
+    ['có tiền và ngày trả mà thiếu dấu tiền mặt hay chuyển khoản', { tien: 1000, ngayTra: '2026-11-05' }],
     ['ô không chắc về dấu', { tien: 1000, ngayTra: '2026-11-05', khongChac: ['tienMat' as const] }],
     ['thiếu tên khách', { khach: '' }],
     ['thiếu ngày nhận', { ngayNhan: undefined }],
@@ -42,9 +43,9 @@ describe('phân loại dòng sổ', () => {
     expect(await h.phieu.danhSach()).toHaveLength(0)
   })
 
-  it('ngày trả mà chưa có dấu: vẫn là chờ trả khách, kèm cảnh báo', async () => {
-    const kq = await lap().nhapLo.xemTruoc(bang({ ma: 'x', tien: 1000, ngayTra: '2026-11-05' }))
-    expect(kq.phieu[0]).toMatchObject({ loai: 'cho-tra' })
+  it('có ngày trả nhưng chưa có tiền và chưa có dấu: vẫn là phiếu tạm, kèm cảnh báo', async () => {
+    const kq = await lap().nhapLo.xemTruoc(bang({ ma: 'x', ngayTra: '2026-11-05' }))
+    expect(kq.phieu[0]).toMatchObject({ loai: 'tam' })
     expect(kq.phieu[0]!.canhBao.length).toBe(1)
   })
 

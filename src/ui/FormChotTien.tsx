@@ -132,7 +132,7 @@ export default function FormChotTien({ tenKhach, bangGia, onChot }: FormChotTien
       {chiTiet && (
         <fieldset className="chi-tiet">
           <legend>Chi tiết tiền {tenKhach}</legend>
-          {bangGia.length === 0 && (<p className="phu">Chưa có bảng giá dịch vụ. Vào màn Nhập lịch sử để nhập bảng giá.</p>)}
+          {bangGia.length === 0 && (<p className="phu">Chưa có bảng giá dịch vụ. Vào Bảng giá (mục Việc ít dùng) để thêm dịch vụ.</p>)}
           {dong.map((d, i) => {
             const dv = bangGia.find((x) => x.ma === d.ma)
             return (

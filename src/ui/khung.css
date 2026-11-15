@@ -1,0 +1,63 @@
+/* Khung điều hướng: thanh bên trên máy tính, thanh ngang gọn ở màn hẹp. */
+.khung { max-width: 1280px; margin: 0 auto; padding: 16px; display: grid; gap: 12px; grid-template-columns: 220px minmax(0, 1fr); grid-template-areas: "dau dau" "nav noi"; align-items: start; }
+.khung-dau { grid-area: dau; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
+.khung-dau h1 { margin: 0; }
+.khung-dau .dong-bo { margin: 0; flex: 1 1 320px; max-width: 640px; }
+.khung-nav { grid-area: nav; display: grid; gap: 14px; position: sticky; top: 12px; }
+.khung-noi-dung { grid-area: noi; min-width: 0; display: grid; gap: 12px; }
+.khung-nhom { display: grid; gap: 6px; }
+.khung-nhom-tieu { margin: 0; font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #52606d; background: none; border: 0; padding: 0; text-align: left; }
+.khung-nut { display: grid; gap: 4px; }
+.khung-nut button { background: #fff; color: #1f2933; border-color: #d5dbe1; text-align: left; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.khung-nut button[aria-pressed="true"] { background: #1f2933; color: #fff; border-color: #1f2933; }
+.so-dem { background: #d98e04; color: #fff; border-radius: 999px; padding: 0 8px; font-size: .8rem; }
+.khung-nut .so-chua-xem { margin-left: 0; }
+/* Trên máy tính mục "ít dùng" luôn mở, tiêu đề chỉ là nhãn. */
+.khung-gap { cursor: default; pointer-events: none; }
+.khung-gap .so-chua-xem { display: none; }
+
+.nhom-nhan { display: inline-flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; }
+.nhan-canh-bao { background: #fde8e6; color: #b42318; font-weight: 600; }
+.nhan-nguon { background: #e6eefb; color: #254a8a; }
+.ton { font-weight: 600; }
+.qua-nguong { border-left-color: #b42318 !important; background: #fef3f2 !important; }
+.qua-nguong .ton { color: #b42318; }
+.dong-phieu-nut { justify-self: start; }
+
+.man-phieu { display: grid; gap: 12px; grid-template-columns: minmax(300px, 380px) minmax(0, 1fr); align-items: start; }
+.man-phieu .form-nhan-do { margin-bottom: 0; grid-template-columns: 1fr; position: sticky; top: 12px; }
+.man-phieu .mds { margin-top: 0; }
+.chon-khach { grid-column: 1 / -1; border: 1px solid #d5dbe1; border-radius: 6px; display: grid; gap: 8px; margin: 0; padding: 8px; min-width: 0; }
+.chon-khach legend { font-size: .9rem; padding: 0 4px; }
+.khach-da-chon { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.khach-tim, .khach-moi { display: grid; gap: 8px; }
+.khach-ket-qua { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.khach-ket-qua button, .goi-y button { width: 100%; text-align: left; }
+.goi-y { display: grid; gap: 4px; background: #fffaeb; border: 1px solid #e5c471; border-radius: 6px; padding: 8px; }
+.goi-y p { margin: 0; }
+.form .chon-khach button { grid-column: auto; }
+.mds-tim { grid-template-columns: 2fr 1fr 1fr; }
+.mds .ds { grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); }
+.phieu { align-content: start; }
+.phieu .dau { flex-wrap: wrap; }
+
+@media (max-width: 1000px) {
+  .man-phieu { grid-template-columns: 1fr; }
+  .man-phieu .form-nhan-do { position: static; }
+}
+
+@media (max-width: 767px) {
+  .khung { padding: 10px; grid-template-columns: minmax(0, 1fr); grid-template-areas: "dau" "nav" "noi"; }
+  .khung-nav { position: static; gap: 8px; }
+  .khung-nut { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .khung-nut button { padding: 10px 8px; min-height: 44px; }
+  .khung-gap { pointer-events: auto; cursor: pointer; border: 1px solid #d5dbe1; background: #fff; color: #1f2933; padding: 10px; font-size: .9rem; text-transform: none; letter-spacing: 0; font-weight: 600; min-height: 44px; display: flex; justify-content: space-between; }
+  .khung-gap .so-chua-xem { display: inline; }
+  .khung-nhom[data-mo="false"] .khung-it-dung { display: none; }
+  .mds .ds { grid-template-columns: 1fr; }
+  .mds-tim { grid-template-columns: 1fr; }
+  input, select, button { min-height: 40px; }
+}
+
+label.hang { display: flex; align-items: center; gap: 8px; }
+label.hang input[type="checkbox"] { width: 18px; height: 18px; min-height: 0; flex: 0 0 auto; }
