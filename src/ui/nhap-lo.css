@@ -1,0 +1,37 @@
+.nl { display: grid; gap: 12px; }
+.nl-khung { background: #fff; border: 1px solid #d5dbe1; border-radius: 8px; padding: 12px; display: grid; gap: 8px; }
+.nl h3 { font-size: 1rem; margin: 0; }
+.nl textarea { font: inherit; padding: 8px; border: 1px solid #b6bfc8; border-radius: 6px; width: 100%; }
+.nl-ghi { margin: 0; color: #52606d; font-size: .9rem; }
+.nl-hang { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.nl-phu, .nl-xoa { background: #fff; color: #1f2933; border-color: #b6bfc8; }
+.nl-xoa { color: #b42318; border-color: #b42318; }
+.nl-file { display: inline-block; position: relative; padding: 8px 12px; border: 1px solid #b6bfc8; border-radius: 6px; background: #fff; cursor: pointer; }
+.nl-file input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.nl-nhan { color: #52606d; font-size: .8rem; }
+.nl-bang { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.nl-dong { border: 1px solid #d5dbe1; border-radius: 6px; padding: 8px; display: grid; gap: 6px 8px; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+.nl-dong .nl-rong, .nl-dau, .nl-ghi-vang { grid-column: 1 / -1; }
+.nl-dau { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.nl-dau label { display: flex; align-items: center; gap: 4px; padding: 2px 4px; border-radius: 4px; }
+.nl-dau input[type="checkbox"] { width: 18px; height: 18px; }
+.nl-dau .nl-xoa { margin-left: auto; }
+.nl-vang { background: #fff3b0; }
+input.nl-vang { border-color: #d98e04; }
+.nl-sai { border-color: #b42318; background: #fef3f2; }
+.nl-ghi-vang { margin: 0; font-size: .85rem; color: #8a5a00; }
+.nl-tong { margin: 0; font-weight: 600; }
+.nl-ds { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.nl-pk { border: 1px solid #d5dbe1; border-left: 4px solid #9aa5b1; border-radius: 6px; padding: 8px 10px; display: grid; gap: 4px; }
+.nl-pk.nl-san-sang { border-left-color: #0b6e4f; }
+.nl-pk.nl-loai-can-hoi { border-left-color: #b42318; background: #fef3f2; }
+.nl-pk.nl-loai-bo-qua, .nl-pk.nl-loai-da-nhap { background: #f4f6f8; color: #52606d; }
+.nl-pk-dau { display: flex; justify-content: space-between; gap: 8px; }
+.nl-the { font-size: .8rem; background: #eef1f4; padding: 2px 8px; border-radius: 999px; white-space: nowrap; align-self: start; }
+.nl-pk-phu { color: #52606d; font-size: .9rem; }
+.nl-hoi { margin: 0; color: #b42318; font-size: .9rem; }
+.nl-canh-bao { margin: 0; color: #8a5a00; font-size: .9rem; }
+.nl-duyet { display: flex; align-items: center; gap: 8px; }
+.nl-ket-qua ul { margin: 4px 0 0; padding-left: 18px; }
+@media (max-width: 480px) { .nl-pk-dau { flex-direction: column; } .nl-dong { grid-template-columns: 1fr 1fr; } }
+.nl button:disabled { opacity: .5; cursor: not-allowed; }

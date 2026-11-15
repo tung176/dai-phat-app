@@ -115,14 +115,14 @@ describe('nhập lịch sử', () => {
       maDatHangCu: 'DH000001',
     })
     expect(p1.dongCu).toHaveLength(2)
-    expect(p1.nhapSaiQuyTrinh).toBeUndefined()
+    expect(p1.nguon).toBe('kiotviet')
   })
 
   it('hóa đơn không qua phiếu đặt hàng: ngày nhận trống, gắn nhãn nhập sai quy trình, vẫn tính vào thu, gắn khách lẻ', async () => {
     const h = lap()
     await h.nhap.nhap(goi(), { xacNhan: true })
     const p = (await h.phieu.danhSach()).find((x) => x.maHoaDonCu === 'HD000003')!
-    expect(p).toMatchObject({ ngayNhan: '', nhapSaiQuyTrinh: true, nhan: 'Đã trả', tongTien: 140000 })
+    expect(p).toMatchObject({ ngayNhan: '', nguon: 'nhap-sai-quy-trinh', nhan: 'Đã trả', tongTien: 140000 })
     expect(p.khach.ten).toBe('Khách lẻ (KiotViet)')
     expect(tongHopThu([p], KHOANG).tienMat).toBe(140000)
   })

@@ -40,12 +40,18 @@ export interface BanGhiPhieu {
   thayTheCho?: string
   /** Ticket 05: phiếu này đã được thay bằng phiếu mới có mã này. */
   thayTheBoi?: string
-  /** Ticket 07: phiếu nhập từ lịch sử KiotViet. Mã hóa đơn KiotViet (phiếu đã trả). */
+  /** Ticket 09: khóa ổn định của dòng sổ đã sinh ra phiếu này ("lô:mã dòng"), để nhập lại không trùng. */
+  khoaNhapLo?: string
+  /**
+   * Nhãn nguồn của phiếu nhập từ KiotViet (ticket 07): "kiotviet" cho phiếu qua phiếu đặt hàng,
+   * "nhap-sai-quy-trinh" cho hóa đơn không qua phiếu đặt hàng. Báo cáo không lọc theo trường này:
+   * phiếu đã trả nào cũng tính vào thu.
+   */
+  nguon?: string
+  /** Ticket 07: mã hóa đơn KiotViet (phiếu đã trả), để nhập lại không trùng. */
   maHoaDonCu?: string
   /** Ticket 07: mã đặt hàng KiotViet (phiếu tạm, hoặc phiếu đặt hàng gắn với hóa đơn). */
   maDatHangCu?: string
-  /** Ticket 07: hóa đơn KiotViet không qua phiếu đặt hàng. Vẫn tính vào thu. */
-  nhapSaiQuyTrinh?: boolean
   /** Ticket 07: ngày trả là giờ nhập KiotViet, không phải ngày khách lấy đồ thật. */
   nguonNgayTra?: 'gio-nhap-kiotviet'
   /** Ticket 07: dòng hàng gốc của KiotViet (lịch sử, không dùng để tính lại tiền). */

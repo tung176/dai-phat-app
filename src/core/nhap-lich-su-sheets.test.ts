@@ -52,10 +52,10 @@ describe('nhập lịch sử qua Google Sheet', () => {
     expect(soDong('Khách')).toBe(1 + 6) // 5 khách trong file + khách lẻ giữ chỗ
     expect(soDong('Dịch vụ')).toBe(1 + 4)
 
-    const hang = [2, 3, 4, 5].find((r) => o('Phiếu', r, 15) === 'HD000003')!
-    expect(o('Phiếu', hang, 17)).toBe('TRUE') // Nhập sai quy trình
-    expect(o('Phiếu', hang, 18)).toBe('gio-nhap-kiotviet')
-    expect(String(o('Phiếu', hang, 19))).toContain('SP000001')
+    const hang = [2, 3, 4, 5].find((r) => o('Phiếu', r, 16) === 'HD000003')!
+    expect(o('Phiếu', hang, 18)).toBe('nhap-sai-quy-trinh') // Nguồn
+    expect(o('Phiếu', hang, 19)).toBe('gio-nhap-kiotviet')
+    expect(String(o('Phiếu', hang, 20))).toContain('SP000001')
 
     const b = mayMoi()
     await b.he.dongBo.dongBo()

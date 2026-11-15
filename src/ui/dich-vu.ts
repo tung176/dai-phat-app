@@ -5,12 +5,14 @@ import { bangGiaGia } from '../core/bang-gia-gia.ts'
 import { taoKhoPhieuTrongBoNho } from '../core/kho-trong-bo-nho.ts'
 import { taoKhoCaiDatTrongBoNho, taoKhoNhatKyTrongBoNho } from '../core/nhat-ky-phieu.ts'
 import { taoDichVuSuaSai, type DichVuSuaSai } from '../core/sua-sai-service.ts'
+import { taoDichVuNhapLo, type DichVuNhapLo } from '../core/nhap-lo-service.ts'
 import { taoBangDemIndexedDb } from '../core/bang-dem-indexeddb.ts'
 import { taoHeKhoSheets } from '../core/kho-sheets.ts'
 import type { DongBoSheets } from '../core/dong-bo-sheets.ts'
 import type { BanGhiKhach, NhatKyGop } from '../core/khach.ts'
 import type { BanGhiPhieu } from '../core/types.ts'
 import type { DongCaiDatPhieu, DongDaXem, DongNhatKyPhieu } from '../core/dong-nhat-ky-phieu.ts'
+import { taoDichVuNhomKhach, type DichVuNhomKhach } from '../core/nhom-khach-service.ts'
 import { taoLuuCauHinh } from '../core/luu-cau-hinh.ts'
 import { batDongBoTuDong } from './dong-bo-tu-dong.ts'
 import { taoKhoDichVuTrongBoNho, type BanGhiDichVu, type KhoDichVu } from '../core/kho-dich-vu.ts'
@@ -21,6 +23,10 @@ export interface HeThongDichVu {
   khach: DichVuKhach
   /** Ticket 05: sửa, hủy, thay thế, nhật ký, rà soát. */
   suaSai: DichVuSuaSai
+  /** Ticket 09: nhập lô từ sổ. */
+  nhapLo: DichVuNhapLo
+  /** Ticket 10: nhóm khách và danh sách nhắn tin. */
+  nhomKhach: DichVuNhomKhach
   /** Ticket 07: bảng giá dịch vụ (thực thể) và nhập lịch sử KiotViet. */
   dichVu: KhoDichVu
   nhapLichSu: DichVuNhapLichSu
@@ -36,12 +42,20 @@ export async function taoDichVuMau(): Promise<HeThongDichVu> {
   const khoDichVu = taoKhoDichVuTrongBoNho()
   const khach = taoDichVuKhach({ khoKhach, khoPhieu: kho })
   const dv = taoDichVuPhieu({ kho, khach })
+  const khoNhatKy = taoKhoNhatKyTrongBoNho()
   const suaSai = taoDichVuSuaSai({
     kho,
     phieu: dv,
     khach,
-    khoNhatKy: taoKhoNhatKyTrongBoNho(),
+    khoNhatKy,
     khoCaiDat: taoKhoCaiDatTrongBoNho(),
+  })
+  const nhapLo = taoDichVuNhapLo({ kho, phieu: dv, khach, suaSai, khoNhatKy })
+  const nhomKhach = taoDichVuNhomKhach({
+    khach,
+    phieu: dv,
+    khoNhatKy,
+    nguoiHienTai: () => suaSai.nguoiHienTai(),
   })
   await dv.nhanDo({ tenKhach: 'Khách Mẫu A', ngayNhan: '2026-11-01', moTa: '1 túi quần áo', ghiChu: 'tầng 2' })
   const b = await dv.nhanDo({ tenKhach: 'Khách Mẫu B', ngayNhan: '2026-11-02', moTa: '2 chăn' })
@@ -60,7 +74,7 @@ export async function taoDichVuMau(): Promise<HeThongDichVu> {
     phuThu: [{ soTien: 5000, ghiChu: '+5K' }],
   })
   const nhapLichSu = taoDichVuNhapLichSu({ khoPhieu: kho, khoKhach, khoDichVu })
-  return { phieu: dv, khach, suaSai, dichVu: khoDichVu, nhapLichSu }
+  return { phieu: dv, khach, suaSai, nhapLo, nhomKhach, dichVu: khoDichVu, nhapLichSu }
 }
 
 export interface KetNoiSheets {
@@ -100,8 +114,15 @@ export function taoDichVuThat(): KetNoiSheets {
       khoNhatKy: kho.nhatKyPhieu,
       khoCaiDat: kho.caiDatPhieu,
     })
+    const nhapLo = taoDichVuNhapLo({ kho: kho.phieu, phieu, khach, suaSai, khoNhatKy: kho.nhatKyPhieu })
+    const nhomKhach = taoDichVuNhomKhach({
+      khach,
+      phieu,
+      khoNhatKy: kho.nhatKyPhieu,
+      nguoiHienTai: () => suaSai.nguoiHienTai(),
+    })
     const nhapLichSu = taoDichVuNhapLichSu({ khoPhieu: kho.phieu, khoKhach: kho.khach, khoDichVu: kho.dichVu })
-    ketNoi = { he: { phieu, khach, suaSai, dichVu: kho.dichVu, nhapLichSu }, dongBo: kho.dongBo, luu }
+    ketNoi = { he: { phieu, khach, suaSai, nhapLo, nhomKhach, dichVu: kho.dichVu, nhapLichSu }, dongBo: kho.dongBo, luu }
   }
   return ketNoi
 }

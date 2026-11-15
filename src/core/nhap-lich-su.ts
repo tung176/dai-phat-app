@@ -118,7 +118,7 @@ function sangPhieu(p: GoiPhieu): BanGhiPhieu {
     trangThai: daTra ? 'da-tra' : 'chua-thanh-toan',
     ...(p.maHoaDonCu ? { maHoaDonCu: p.maHoaDonCu } : {}),
     ...(p.maDatHangCu ? { maDatHangCu: p.maDatHangCu } : {}),
-    ...(p.nhapSaiQuyTrinh ? { nhapSaiQuyTrinh: true } : {}),
+    nguon: p.nhapSaiQuyTrinh ? 'nhap-sai-quy-trinh' : 'kiotviet',
     dongCu: p.dong.map((d) => ({ ...d })),
   }
 }
