@@ -98,11 +98,17 @@ function quyTacTheoTen(ten: string): DichVu | undefined {
   return undefined
 }
 
+/** Chủ tiệm xác nhận 15/11/2026: "Sấy Không Giặt" (8.000đ) tính theo kg, không có mức tối thiểu. */
+function laDichVuTheoKgKhongToiThieu(ma: string, ten: string): boolean {
+  return ma === 'SP000004' || boDau(ten).trim() === 'say khong giat'
+}
+
 function chuyenDichVu(d: DongKiotViet): GoiDichVu {
   const ma = chuoi(d, 'Mã hàng')
   const ten = chuoi(d, 'Tên hàng')
   const quyTac = MA_QUY_TAC[ma] ?? quyTacTheoTen(ten)
-  const kieu = quyTac !== undefined || chuoi(d, 'ĐVT').toLowerCase() === 'kg' ? 'kg' : 'so-luong'
+  const theoKg = quyTac !== undefined || chuoi(d, 'ĐVT').toLowerCase() === 'kg' || laDichVuTheoKgKhongToiThieu(ma, ten)
+  const kieu = theoKg ? 'kg' : 'so-luong'
   const nhomHang = chuoi(d, 'Nhóm hàng(3 Cấp)')
   return {
     maCu: ma,

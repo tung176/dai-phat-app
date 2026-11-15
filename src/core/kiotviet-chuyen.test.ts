@@ -78,6 +78,33 @@ describe('chuyển dữ liệu KiotViet thành gói nhập lịch sử', () => {
     expect(JSON.stringify(g.dichVu)).not.toContain('99999')
   })
 
+  it('"Sấy Không Giặt" tính theo kg, không mức tối thiểu; tẩy và áo khoác tính theo số lượng (chủ tiệm xác nhận)', () => {
+    const dong = (ma: string, ten: string, gia: number) => ({
+      'Loại hàng': 'Dịch vụ',
+      'Nhóm hàng(3 Cấp)': 'Quần áo',
+      'Mã hàng': ma,
+      'Tên hàng': ten,
+      'Giá bán': gia,
+      'Giá vốn': 99999,
+      ĐVT: '',
+      'Đang kinh doanh': 1,
+    })
+    const b = boKiotVietGia()
+    const g = chuyenKiotViet({
+      ...b,
+      sanPham: [
+        dong('SP000004', 'Sấy Không Giặt', 8000),
+        dong('SP000039', 'Tẩy quần áo', 20000),
+        dong('SP000011', 'Giặt Chăm Sóc Áo Khoác Các Loại', 70000),
+      ],
+    })
+    const dv = (m: string) => g.dichVu.find((d) => d.maCu === m)!
+    expect(dv('SP000004')).toMatchObject({ kieu: 'kg', donGia: 8000 })
+    expect(dv('SP000004').toiThieu).toBeUndefined()
+    expect(dv('SP000039')).toMatchObject({ kieu: 'so-luong', donGia: 20000 })
+    expect(dv('SP000011')).toMatchObject({ kieu: 'so-luong', donGia: 70000 })
+  })
+
   it('đối chiếu với số mong đợi: khớp thì khop true, lệch thì khop false', () => {
     const mong = { soPhieuDaTra: 3, soPhieuChuaThanhToan: 1, soKhach: 5, soDichVu: 4, tienMat: 238000, chuyenKhoan: 61000 }
     const g = chuyenKiotViet(boKiotVietGia(), { mong })
