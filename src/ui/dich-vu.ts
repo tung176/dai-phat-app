@@ -1,4 +1,5 @@
 import { taoDichVuPhieu, type DichVuPhieu } from '../core/phieu-service.ts'
+import { bangGiaGia } from '../core/bang-gia-gia.ts'
 import { taoKhoPhieuTrongBoNho } from '../core/kho-trong-bo-nho.ts'
 
 /**
@@ -13,5 +14,13 @@ export async function taoDichVuMau(): Promise<DichVuPhieu> {
   const c = await dv.nhanDo({ tenKhach: 'Khách Mẫu C', ngayNhan: '2026-11-03', moTa: '3 gối tựa' })
   await dv.chotTien(c.id, 90000)
   await dv.traKhach(c.id, { ngayTra: '2026-11-05', phuongThuc: 'tien-mat' })
+  const d = await dv.nhanDo({ tenKhach: 'Khách Mẫu D', ngayNhan: '2026-11-04', moTa: '1 túi quần áo, 1 chăn ga' })
+  await dv.chotTien(d.id, 120000, {
+    dong: [
+      { dichVu: bangGiaGia.quanAoThuong, kg: 3.5 },
+      { dichVu: bangGiaGia.chanGa, kg: 2 },
+    ],
+    phuThu: [{ soTien: 5000, ghiChu: '+5K' }],
+  })
   return dv
 }
