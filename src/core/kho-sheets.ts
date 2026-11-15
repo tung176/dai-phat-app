@@ -1,162 +1,98 @@
 import type { BangDem } from './bang-dem.ts'
-import { SO_COT_PHIEU, TAB_PHIEU, sangDong, tuDong } from './dong-phieu.ts'
-import { LoiDongBo, goiAppsScript } from './gas-client.ts'
+import { taoBangDemTrongBoNho } from './bang-dem.ts'
+import { taoDongBoSheets, type DongBoSheets, type TuyChonDongBo } from './dong-bo-sheets.ts'
+import { TAB_KHACH, TAB_NHAT_KY, khachSangDong, khachTuDong, nhatKySangDong, nhatKyTuDong } from './dong-khach.ts'
+import { TAB_PHIEU, sangDong, tuDong } from './dong-phieu.ts'
+import type { BanGhiKhach, NhatKyGop } from './khach.ts'
+import type { KhoKhach } from './kho-khach.ts'
 import type { KhoPhieu } from './kho-phieu.ts'
-import type { CauHinhSheets } from './ma-cai-dat.ts'
 import type { BanGhiPhieu } from './types.ts'
 
-export type KieuDongBo =
-  /** Chưa dán mã cài đặt: vẫn dùng được, dữ liệu nằm trong máy và chờ gửi. */
-  | 'chua-cai-dat'
-  /** Đã cài đặt nhưng chưa đồng bộ lần nào trong lần mở này. */
-  | 'chua-dong-bo'
-  | 'dang-gui'
-  | 'da-dong-bo'
-  /** Không tới được máy chủ: dữ liệu giữ trong máy, tự gửi khi có mạng. */
-  | 'cho-mang'
-  /** Apps Script từ chối (sai mã bí mật, chưa đặt mã...): cần xem lại cài đặt. */
-  | 'loi'
-
-export interface TrangThaiDongBo {
-  kieu: KieuDongBo
-  /** Số phiếu đang chờ gửi lên Sheet. */
-  choGui: number
-  /** Lần đồng bộ thành công gần nhất (mili giây), nếu có. */
-  lanCuoi?: number
-  /** Thông báo cho người dùng khi lỗi. Không bao giờ chứa địa chỉ hay mã bí mật. */
-  thongBao?: string
+export interface HeKhoSheets {
+  phieu: KhoPhieu
+  khach: KhoKhach
+  /** Một bộ đồng bộ chung cho cả phiếu, khách, nhật ký gộp: một chỉ báo trạng thái, một hàng đợi. */
+  dongBo: DongBoSheets
 }
 
-export interface KhoSheets extends KhoPhieu {
-  /** Đẩy phiếu chờ gửi lên Sheet rồi kéo bản mới về. Gọi chồng nhau sẽ xếp hàng, không chạy song song. */
-  dongBo(): Promise<void>
-  trangThai(): TrangThaiDongBo
-  /** Đăng ký nhận báo khi dữ liệu hoặc trạng thái đổi. Trả về hàm hủy đăng ký. */
-  theoDoi(nghe: () => void): () => void
+export interface TuyChonHeKhoSheets extends TuyChonDongBo {
+  /** Mặc định là bản đệm trong bộ nhớ (dùng khi thử); app thật truyền IndexedDB. */
+  bangDem?: {
+    phieu: BangDem<BanGhiPhieu>
+    khach: BangDem<BanGhiKhach>
+    nhatKy: BangDem<NhatKyGop>
+  }
+  /** Sinh mã bản ghi mới; tiền tố là 'P' (phiếu), 'K' (khách), 'G' (gộp khách). */
+  taoId?: (tienTo: string) => string
 }
 
-export interface TuyChonKhoSheets {
-  bangDem: BangDem
-  /** Đọc cấu hình mỗi lần cần, để dán mã cài đặt xong là dùng được ngay. null = chưa cài đặt. */
-  cauHinh: () => CauHinhSheets | null
-  fetch?: typeof fetch
-  /** Mặc định true: ghi xong tự đồng bộ ngầm. */
-  tuDong?: boolean
-  taoId?: () => string
-  bayGio?: () => number
+/**
+ * Mã mới sinh ngay tại máy (không chờ máy chủ cấp) nên ghi lúc mất mạng được, và gửi lại không nhân đôi.
+ * Dạng "P2026-<thời điểm base36><ngẫu nhiên>": cùng năm thì sắp theo mã là sắp theo thời điểm tạo.
+ */
+function taoIdMacDinh(tienTo: string, bayGio: () => number): string {
+  const luc = bayGio()
+  const nam = new Date(luc).getFullYear()
+  const ngauNhien = [...crypto.getRandomValues(new Uint8Array(3))]
+    .map((x) => x.toString(36).padStart(2, '0').slice(-2))
+    .join('')
+  return `${tienTo}${nam}-${luc.toString(36).padStart(9, '0')}${ngauNhien}`.toUpperCase()
 }
 
-const CO_MOT_LAN_GUI = 200
-
-function taoIdMacDinh(nam: number): string {
-  const b = crypto.getRandomValues(new Uint8Array(6))
-  const ma = [...b].map((x) => x.toString(36).padStart(2, '0').slice(-2)).join('').toUpperCase()
-  return `P${nam}-${ma}`
-}
-
-export function taoKhoSheets(tuy: TuyChonKhoSheets): KhoSheets {
-  const { bangDem } = tuy
+/** Cài các cổng KhoPhieu và KhoKhach bằng bản đệm cục bộ và đồng bộ lên Google Sheet qua Apps Script. */
+export function taoHeKhoSheets(tuy: TuyChonHeKhoSheets): HeKhoSheets {
   const bayGio = tuy.bayGio ?? (() => Date.now())
-  const taoId = tuy.taoId ?? (() => taoIdMacDinh(new Date(bayGio()).getFullYear()))
-  const tuDongDay = tuy.tuDong ?? true
-
-  let trangThai: TrangThaiDongBo = { kieu: tuy.cauHinh() ? 'chua-dong-bo' : 'chua-cai-dat', choGui: 0 }
-  const nguoiNghe = new Set<() => void>()
-  const bao = () => nguoiNghe.forEach((f) => f())
-  const datTrangThai = (t: Partial<TrangThaiDongBo>) => {
-    trangThai = { ...trangThai, ...t }
-    if (t.thongBao === undefined) delete trangThai.thongBao
-    bao()
+  const taoId = tuy.taoId ?? ((t: string) => taoIdMacDinh(t, bayGio))
+  const dongBo = taoDongBoSheets(tuy)
+  const dem = tuy.bangDem ?? {
+    phieu: taoBangDemTrongBoNho<BanGhiPhieu>(),
+    khach: taoBangDemTrongBoNho<BanGhiKhach>(),
+    nhatKy: taoBangDemTrongBoNho<NhatKyGop>(),
   }
-
-  async function capNhatSoCho() {
-    trangThai = { ...trangThai, choGui: (await bangDem.choGui()).length }
-  }
-  // Mở app lại: biết ngay có bao nhiêu phiếu còn chờ gửi từ lần trước.
-  void capNhatSoCho().then(bao, () => {})
-  void bangDem.docLanDongBoCuoi().then(
-    (l) => {
-      if (l !== undefined) trangThai = { ...trangThai, lanCuoi: l }
-    },
-    () => {},
-  )
-
-  async function chayDongBo(): Promise<void> {
-    const cauHinh = tuy.cauHinh()
-    await capNhatSoCho()
-    if (!cauHinh) {
-      datTrangThai({ kieu: 'chua-cai-dat', thongBao: undefined })
-      return
-    }
-    datTrangThai({ kieu: 'dang-gui', thongBao: undefined })
-    try {
-      const cho = await bangDem.choGui()
-      for (let i = 0; i < cho.length; i += CO_MOT_LAN_GUI) {
-        const lo = cho.slice(i, i + CO_MOT_LAN_GUI)
-        await goiAppsScript(
-          cauHinh,
-          'upsert',
-          { tab: TAB_PHIEU, rows: lo.map((m) => sangDong(m.banGhi, bayGio())) },
-          tuy.fetch,
-        )
-        await bangDem.danhDauDaGui(lo.map((m) => ({ id: m.banGhi.id, phienBan: m.phienBan })))
-      }
-      const keo = await goiAppsScript<{ rows: unknown[][] }>(cauHinh, 'pull', { tab: TAB_PHIEU }, tuy.fetch)
-      const tuMayChu = keo.rows
-        .map((d) => (Array.isArray(d) && d.length >= SO_COT_PHIEU ? tuDong(d) : undefined))
-        .filter((b): b is BanGhiPhieu => b !== undefined)
-      await bangDem.nhanTuMayChu(tuMayChu)
-      const luc = bayGio()
-      await bangDem.datLanDongBoCuoi(luc)
-      await capNhatSoCho()
-      datTrangThai({ kieu: 'da-dong-bo', lanCuoi: luc, thongBao: undefined })
-    } catch (e) {
-      await capNhatSoCho()
-      if (e instanceof LoiDongBo && e.loai === 'tu-choi') {
-        datTrangThai({ kieu: 'loi', thongBao: e.message })
-      } else {
-        datTrangThai({
-          kieu: 'cho-mang',
-          thongBao: e instanceof LoiDongBo ? e.message : 'Chưa đồng bộ được, sẽ thử lại.',
-        })
-      }
-    }
-  }
-
-  // Xếp hàng: mỗi lượt đồng bộ chạy sau lượt trước, không bao giờ hai lượt cùng lúc.
-  let hang: Promise<void> = Promise.resolve()
-  function dongBo(): Promise<void> {
-    const lan = hang.then(chayDongBo)
-    hang = lan.catch(() => {})
-    return lan
-  }
-
-  async function sauKhiGhi() {
-    await capNhatSoCho()
-    bao()
-    if (tuDongDay) void dongBo()
-  }
+  // Thứ tự đăng ký = thứ tự gửi: khách trước phiếu, để trên Sheet không có phiếu trỏ tới khách chưa có.
+  const khach = dongBo.themBang({
+    tab: TAB_KHACH,
+    bangDem: dem.khach,
+    sangDong: khachSangDong,
+    tuDong: khachTuDong,
+  })
+  const nhatKy = dongBo.themBang({
+    tab: TAB_NHAT_KY,
+    bangDem: dem.nhatKy,
+    sangDong: nhatKySangDong,
+    tuDong: nhatKyTuDong,
+  })
+  const phieu = dongBo.themBang({ tab: TAB_PHIEU, bangDem: dem.phieu, sangDong, tuDong })
 
   return {
-    async them(banGhi) {
-      const moi: BanGhiPhieu = { ...banGhi, id: taoId() }
-      await bangDem.ghi(moi)
-      await sauKhiGhi()
-      return structuredClone(moi)
-    },
-    lay: (id) => bangDem.lay(id),
-    async ghi(banGhi) {
-      await bangDem.ghi(banGhi)
-      await sauKhiGhi()
-    },
-    tatCa: () => bangDem.tatCa(),
     dongBo,
-    trangThai: () => ({ ...trangThai }),
-    theoDoi(nghe) {
-      nguoiNghe.add(nghe)
-      return () => {
-        nguoiNghe.delete(nghe)
-      }
+    phieu: {
+      async them(b) {
+        const moi: BanGhiPhieu = { ...b, id: taoId('P') }
+        await phieu.ghi(moi)
+        return structuredClone(moi)
+      },
+      lay: (id) => phieu.lay(id),
+      ghi: (b) => phieu.ghi(b),
+      tatCa: () => phieu.tatCa(),
+    },
+    khach: {
+      async them(b) {
+        const moi: BanGhiKhach = { ...b, id: taoId('K') }
+        await khach.ghi(moi)
+        return structuredClone(moi)
+      },
+      lay: (id) => khach.lay(id),
+      ghi: (b) => khach.ghi(b),
+      tatCa: () => khach.tatCa(),
+      async themNhatKy(n) {
+        const moi: NhatKyGop = { ...n, id: taoId('G') }
+        await nhatKy.ghi(moi)
+        return structuredClone(moi)
+      },
+      layNhatKy: (id) => nhatKy.lay(id),
+      ghiNhatKy: (n) => nhatKy.ghi(n),
+      tatCaNhatKy: () => nhatKy.tatCa(),
     },
   }
 }

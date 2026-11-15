@@ -3,8 +3,8 @@ import { createScript, type KichBanGia } from '../../tools/fakegas.mjs'
 
 // Kiểm thử hợp đồng của apps-script/Code.gs: chạy đúng mã đó trong môi trường Apps Script giả lập.
 const MA = `gia-${crypto.randomUUID()}`
-const hang = (id: string, ten: string, capNhat = '1') =>
-  [id, ten, '', '2026-11-01', 'đồ', '', '', '', '', 'chua-thanh-toan', capNhat]
+const hang = (id: string, khach: string, capNhat = '1') =>
+  [id, khach, '2026-11-01', 'đồ', '', '', '', '', 'chua-thanh-toan', '', capNhat]
 
 let kb: KichBanGia
 beforeEach(() => {
@@ -36,14 +36,14 @@ describe('Code.gs', () => {
   })
 
   it('upsert theo mã: gửi lại không nhân đôi, gửi bản mới thì cập nhật', () => {
-    const a = kb.post({ secret: MA, action: 'upsert', tab: 'Phiếu', rows: [hang('P1', 'Khách Mẫu A')] })
+    const a = kb.post({ secret: MA, action: 'upsert', tab: 'Phiếu', rows: [hang('P1', 'K-A')] })
     expect(a).toMatchObject({ ok: true, added: 1, updated: 0 })
-    const b = kb.post({ secret: MA, action: 'upsert', tab: 'Phiếu', rows: [hang('P1', 'Khách Mẫu A')] })
+    const b = kb.post({ secret: MA, action: 'upsert', tab: 'Phiếu', rows: [hang('P1', 'K-A')] })
     expect(b).toMatchObject({ ok: true, added: 0, updated: 1 })
-    kb.post({ secret: MA, action: 'upsert', tab: 'Phiếu', rows: [hang('P1', 'Khách Mẫu Đổi', '2')] })
+    kb.post({ secret: MA, action: 'upsert', tab: 'Phiếu', rows: [hang('P1', 'K-ĐỔI', '2')] })
     const r = kb.post({ secret: MA, action: 'pull', tab: 'Phiếu' }) as { rows: string[][] }
     expect(r.rows).toHaveLength(1)
-    expect(r.rows[0][1]).toBe('Khách Mẫu Đổi')
+    expect(r.rows[0][1]).toBe('K-ĐỔI')
   })
 
   it('từ chối tab lạ và dòng sai số cột (không ghi lấp lửng)', () => {

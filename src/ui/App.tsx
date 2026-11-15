@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
-import type { DauVaoNhanDo } from '../core/phieu-service.ts'
+import type { DauVaoNhanDo, DichVuPhieu } from '../core/phieu-service.ts'
 import { LoiNghiepVu, type NhanPhieu, type Phieu, type PhuongThuc } from '../core/types.ts'
 import { taoDichVuThat, type KetNoiSheets } from './dich-vu.ts'
 import { ChiBaoDongBo, ManCaiDat } from './cai-dat.tsx'
@@ -7,6 +7,7 @@ import { useTrangThaiDongBo } from './dung-trang-thai-dong-bo.ts'
 import { danhSachDichVuGia } from '../core/bang-gia-gia.ts'
 import type { ChiTietTien } from '../core/tinh-tien.ts'
 import FormChotTien from './FormChotTien.tsx'
+import { ManHinhKhach } from './khach-ui.tsx'
 import { docNgay, hienNgay, hienTien, homNayIso } from './dinh-dang.ts'
 import ManDanhSach from './ManDanhSach.tsx'
 
@@ -22,8 +23,10 @@ function thongBaoLoi(e: unknown): string {
 
 export default function App() {
   const [kn] = useState<KetNoiSheets>(taoDichVuThat)
-  const dv = kn.dv
+  const he = kn.he
+  const dv: DichVuPhieu = he.phieu
   const [moCaiDat, setMoCaiDat] = useState(false)
+  const [man, setMan] = useState<'phieu' | 'khach'>('phieu')
   const [ds, setDs] = useState<Phieu[]>([])
   const [loc, setLoc] = useState<NhanPhieu | 'Tất cả'>('Tất cả')
   const [loi, setLoi] = useState('')
@@ -66,12 +69,24 @@ export default function App() {
       <h1>Đại Phát - Phiếu giặt là</h1>
       <ChiBaoDongBo trangThai={trangThaiDongBo} onMoCaiDat={() => setMoCaiDat((m) => !m)} />
       {moCaiDat && <ManCaiDat ketNoi={kn} onDong={() => setMoCaiDat(false)} />}
-      {loi && (
+      <nav className="loc" aria-label="Màn hình">
+        <button type="button" aria-pressed={man === 'phieu'} onClick={() => setMan('phieu')}>
+          Phiếu
+        </button>
+        <button type="button" aria-pressed={man === 'khach'} onClick={() => setMan('khach')}>
+          Khách
+        </button>
+      </nav>
+      {man === 'khach' && (
+        <ManHinhKhach khach={he.khach} onDoi={() => void dv.danhSach().then(setDs)} />
+      )}
+      {man === 'phieu' && loi && (
         <p role="alert" className="loi">
           {loi}
         </p>
       )}
-      <FormNhanDo onNhan={(d) => chayThaoTac(() => dv.nhanDo(d))} />
+      {man === 'phieu' && <FormNhanDo onNhan={(d) => chayThaoTac(() => dv.nhanDo(d))} />}
+      {man === 'phieu' && (
       <nav className="loc" aria-label="Lọc phiếu">
         {LOC.map((l) => (
           <button key={l} type="button" aria-pressed={loc === l} onClick={() => setLoc(l)}>
@@ -79,7 +94,8 @@ export default function App() {
           </button>
         ))}
       </nav>
-      {hienThi.length === 0 ? (
+      )}
+      {man !== 'phieu' ? null : hienThi.length === 0 ? (
         <p>Chưa có phiếu nào.</p>
       ) : (
         <ul className="ds">
@@ -95,7 +111,7 @@ export default function App() {
           ))}
         </ul>
       )}
-      <ManDanhSach phieus={ds} homNay={homNayIso()} />
+      {man === 'phieu' && <ManDanhSach phieus={ds} homNay={homNayIso()} />}
     </main>
   )
 }
@@ -177,7 +193,7 @@ function DongPhieu(props: {
   return (
     <li className={`phieu nhan-${p.trangThai}`}>
       <div className="dau">
-        <strong>{p.khach.ten}</strong>
+        <strong>{p.khach.tenHienThi}</strong>
         <span className="nhan">{p.nhan}</span>
       </div>
       <div>

@@ -16,16 +16,17 @@
 var PROP_SECRET = 'MA_BI_MAT';
 var MIN_SECRET = 12;
 
-// Các tab dữ liệu. Cột đầu của mỗi tab là mã bản ghi (khóa). Tab 'Phiếu' dùng từ ticket 02,
-// các tab còn lại được tạo sẵn (chỉ có dòng tiêu đề) để các ticket sau điền vào.
-// Thứ tự cột khớp với src/core/dong-phieu.ts của app. Muốn thêm cột: thêm ở CUỐI.
+// Các tab dữ liệu. Cột đầu của mỗi tab là mã bản ghi (khóa). App tạo mã ngay trên máy nên gửi lại không bị trùng.
+// Thứ tự cột khớp với src/core/dong-phieu.ts và src/core/dong-khach.ts của app. Muốn thêm cột: thêm ở CUỐI.
+// 'Dịch vụ' và 'Dòng phiếu' đã tạo sẵn (chỉ có dòng tiêu đề) cho ticket sau; hiện chi tiết tiền nằm ở cột JSON của tab Phiếu.
 var TABS = {
-  'Phiếu': ['Mã phiếu', 'Tên khách', 'Số điện thoại', 'Ngày nhận', 'Mô tả', 'Ghi chú',
-    'Tổng tiền', 'Ngày trả', 'Phương thức', 'Trạng thái', 'Cập nhật lúc'],
-  'Khách': ['Mã khách', 'Tên', 'Số điện thoại', 'Ghi chú', 'Cập nhật lúc'],
+  'Phiếu': ['Mã phiếu', 'Mã khách', 'Ngày nhận', 'Mô tả', 'Ghi chú', 'Tổng tiền', 'Ngày trả',
+    'Phương thức', 'Trạng thái', 'Chi tiết tiền', 'Cập nhật lúc'],
+  'Khách': ['Mã khách', 'Tên', 'Vị trí', 'Số điện thoại', 'Đồng ý nhận tin', 'Nguồn', 'Ngày tạo',
+    'Gộp vào', 'Cập nhật lúc'],
   'Dịch vụ': ['Mã dịch vụ', 'Tên', 'Đơn vị', 'Đơn giá', 'Cập nhật lúc'],
   'Dòng phiếu': ['Mã dòng', 'Mã phiếu', 'Mã dịch vụ', 'Số lượng', 'Đơn giá', 'Thành tiền', 'Cập nhật lúc'],
-  'Nhật ký': ['Mã', 'Thời điểm', 'Hành động', 'Mã phiếu', 'Chi tiết']
+  'Nhật ký': ['Mã', 'Ngày', 'Giữ lại', 'Gộp vào', 'Phiếu đã chuyển', 'Đã hoàn tác', 'Cập nhật lúc']
 };
 
 function out_(obj) {

@@ -1,5 +1,4 @@
 import type { BangDem, MucChoGui } from './bang-dem.ts'
-import type { BanGhiPhieu } from './types.ts'
 
 const KHO_BAN_GHI = 'banGhi'
 const KHO_CHO_GUI = 'choGui'
@@ -23,7 +22,7 @@ function giaoDich(tx: IDBTransaction): Promise<void> {
 }
 
 /** Bản đệm lưu trong IndexedDB của trình duyệt: còn nguyên khi tắt app, mở lại. */
-export function taoBangDemIndexedDb(tenCsdl = 'giat-la-dem'): BangDem {
+export function taoBangDemIndexedDb<T extends { id: string }>(tenCsdl = 'giat-la-dem'): BangDem<T> {
   let dang: Promise<IDBDatabase> | undefined
   function mo(): Promise<IDBDatabase> {
     dang ??= new Promise((xong, loi) => {
@@ -63,18 +62,18 @@ export function taoBangDemIndexedDb(tenCsdl = 'giat-la-dem'): BangDem {
       }),
     lay: (id) =>
       chay([KHO_BAN_GHI], 'readonly', async (tx) => {
-        return (await yeuCau(tx.objectStore(KHO_BAN_GHI).get(id))) as BanGhiPhieu | undefined
+        return (await yeuCau(tx.objectStore(KHO_BAN_GHI).get(id))) as T | undefined
       }),
     tatCa: () =>
       chay([KHO_BAN_GHI], 'readonly', async (tx) => {
-        return (await yeuCau(tx.objectStore(KHO_BAN_GHI).getAll())) as BanGhiPhieu[]
+        return (await yeuCau(tx.objectStore(KHO_BAN_GHI).getAll())) as T[]
       }),
     choGui: () =>
       chay([KHO_BAN_GHI, KHO_CHO_GUI], 'readonly', async (tx) => {
         const cho = (await yeuCau(tx.objectStore(KHO_CHO_GUI).getAll())) as MucCho[]
-        const ra: MucChoGui[] = []
+        const ra: Array<MucChoGui<T>> = []
         for (const m of cho) {
-          const b = (await yeuCau(tx.objectStore(KHO_BAN_GHI).get(m.id))) as BanGhiPhieu | undefined
+          const b = (await yeuCau(tx.objectStore(KHO_BAN_GHI).get(m.id))) as T | undefined
           if (b) ra.push({ banGhi: b, phienBan: m.phienBan })
         }
         return ra
@@ -97,14 +96,6 @@ export function taoBangDemIndexedDb(tenCsdl = 'giat-la-dem'): BangDem {
           if (!cho.has(String(k))) kho.delete(k)
         }
         for (const b of ds) if (!cho.has(b.id)) kho.put(b)
-      }),
-    docLanDongBoCuoi: () =>
-      chay([KHO_META], 'readonly', async (tx) => {
-        return (await yeuCau(tx.objectStore(KHO_META).get('lanDongBoCuoi'))) as number | undefined
-      }),
-    datLanDongBoCuoi: (luc) =>
-      chay([KHO_META], 'readwrite', async (tx) => {
-        tx.objectStore(KHO_META).put(luc, 'lanDongBoCuoi')
       }),
   }
 }

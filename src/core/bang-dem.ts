@@ -1,8 +1,6 @@
-import type { BanGhiPhieu } from './types.ts'
-
 /** Một bản ghi đang chờ gửi lên Sheet. `phienBan` tăng sau mỗi lần ghi để biết bản nào đã gửi xong. */
-export interface MucChoGui {
-  banGhi: BanGhiPhieu
+export interface MucChoGui<T extends { id: string }> {
+  banGhi: T
   phienBan: number
 }
 
@@ -10,29 +8,26 @@ export interface MucChoGui {
  * Bản đệm cục bộ (trong trình duyệt là IndexedDB): giữ bản sao mới nhất của mọi phiếu để mở nhanh,
  * và hàng đợi các phiếu chưa gửi được lên Sheet. Ghi một phiếu là đồng thời đưa nó vào hàng đợi.
  */
-export interface BangDem {
-  ghi(banGhi: BanGhiPhieu): Promise<void>
-  lay(id: string): Promise<BanGhiPhieu | undefined>
-  tatCa(): Promise<BanGhiPhieu[]>
-  choGui(): Promise<MucChoGui[]>
+export interface BangDem<T extends { id: string }> {
+  ghi(banGhi: T): Promise<void>
+  lay(id: string): Promise<T | undefined>
+  tatCa(): Promise<T[]>
+  choGui(): Promise<Array<MucChoGui<T>>>
   /** Bỏ khỏi hàng đợi các mục đã gửi xong, nhưng chỉ khi mục đó chưa bị ghi đè bản mới hơn. */
   danhDauDaGui(muc: Array<{ id: string; phienBan: number }>): Promise<void>
   /**
    * Nhận toàn bộ phiếu từ Sheet: phiếu nào không chờ gửi thì lấy theo Sheet (kể cả bỏ phiếu không còn trên Sheet);
    * phiếu đang chờ gửi thì giữ bản trên máy.
    */
-  nhanTuMayChu(banGhi: BanGhiPhieu[]): Promise<void>
-  docLanDongBoCuoi(): Promise<number | undefined>
-  datLanDongBoCuoi(luc: number): Promise<void>
+  nhanTuMayChu(banGhi: T[]): Promise<void>
 }
 
 const sao = <T>(v: T): T => structuredClone(v)
 
-export function taoBangDemTrongBoNho(): BangDem {
-  const du = new Map<string, BanGhiPhieu>()
+export function taoBangDemTrongBoNho<T extends { id: string }>(): BangDem<T> {
+  const du = new Map<string, T>()
   const cho = new Map<string, number>()
   let phienBan = 0
-  let lan: number | undefined
   return {
     async ghi(b) {
       du.set(b.id, sao(b))
@@ -54,12 +49,6 @@ export function taoBangDemTrongBoNho(): BangDem {
     async nhanTuMayChu(ds) {
       for (const id of [...du.keys()]) if (!cho.has(id)) du.delete(id)
       for (const b of ds) if (!cho.has(b.id)) du.set(b.id, sao(b))
-    },
-    async docLanDongBoCuoi() {
-      return lan
-    },
-    async datLanDongBoCuoi(luc) {
-      lan = luc
     },
   }
 }

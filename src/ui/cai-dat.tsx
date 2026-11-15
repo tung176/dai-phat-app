@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { LoiDongBo, goiAppsScript } from '../core/gas-client.ts'
-import type { TrangThaiDongBo } from '../core/kho-sheets.ts'
+import type { TrangThaiDongBo } from '../core/dong-bo-sheets.ts'
 import type { KetNoiSheets } from './dich-vu.ts'
 import './dong-bo.css'
 
@@ -53,7 +53,7 @@ export function ManCaiDat(props: { ketNoi: KetNoiSheets; onDong: () => void }) {
     setMa('')
     setDaCai(true)
     setThongBao('Đã lưu mã cài đặt trên máy này. Đang đồng bộ...')
-    void kn.kho.dongBo()
+    void kn.dongBo.dongBo()
   }
 
   async function thu() {
@@ -74,7 +74,7 @@ export function ManCaiDat(props: { ketNoi: KetNoiSheets; onDong: () => void }) {
     kn.luu.xoa()
     setDaCai(false)
     setThongBao('Đã xóa mã cài đặt khỏi máy này. Dữ liệu trong máy và trên Sheet vẫn còn.')
-    void kn.kho.dongBo()
+    void kn.dongBo.dongBo()
   }
 
   return (
@@ -102,7 +102,7 @@ export function ManCaiDat(props: { ketNoi: KetNoiSheets; onDong: () => void }) {
           <button type="button" onClick={() => void thu()}>
             Thử kết nối
           </button>
-          <button type="button" onClick={() => void props.ketNoi.kho.dongBo()}>
+          <button type="button" onClick={() => void props.ketNoi.dongBo.dongBo()}>
             Đồng bộ ngay
           </button>
           <button type="button" onClick={xoa}>

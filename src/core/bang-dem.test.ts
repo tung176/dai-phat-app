@@ -6,16 +6,16 @@ import type { BanGhiPhieu } from './types.ts'
 
 const moi = (id: string, ten = 'Khách Mẫu'): BanGhiPhieu => ({
   id,
-  khach: { ten },
+  khachId: ten,
   ngayNhan: '2026-11-01',
   moTa: 'đồ',
   trangThai: 'chua-thanh-toan',
 })
 
 let n = 0
-const bien: Array<[string, () => BangDem]> = [
-  ['trong bộ nhớ', () => taoBangDemTrongBoNho()],
-  ['IndexedDB', () => taoBangDemIndexedDb(`thu-nghiem-${++n}-${crypto.randomUUID()}`)],
+const bien: Array<[string, () => BangDem<BanGhiPhieu>]> = [
+  ['trong bộ nhớ', () => taoBangDemTrongBoNho<BanGhiPhieu>()],
+  ['IndexedDB', () => taoBangDemIndexedDb<BanGhiPhieu>(`thu-nghiem-${++n}-${crypto.randomUUID()}`)],
 ]
 
 describe.each(bien)('bản đệm %s', (_ten, tao) => {
@@ -24,8 +24,8 @@ describe.each(bien)('bản đệm %s', (_ten, tao) => {
     await d.ghi(moi('A'))
     const b = await d.lay('A')
     expect(b).toEqual(moi('A'))
-    b!.khach.ten = 'đã sửa ngoài'
-    expect((await d.lay('A'))!.khach.ten).toBe('Khách Mẫu')
+    b!.khachId = 'đã sửa ngoài'
+    expect((await d.lay('A'))!.khachId).toBe('Khách Mẫu')
     expect(await d.tatCa()).toHaveLength(1)
     expect(await d.lay('khong-co')).toBeUndefined()
   })
@@ -38,7 +38,7 @@ describe.each(bien)('bản đệm %s', (_ten, tao) => {
     await d.danhDauDaGui([{ id: gui.banGhi.id, phienBan: gui.phienBan }])
     const con = await d.choGui()
     expect(con).toHaveLength(1)
-    expect(con[0].banGhi.khach.ten).toBe('Sửa trong lúc đang gửi')
+    expect(con[0].banGhi.khachId).toBe('Sửa trong lúc đang gửi')
     await d.danhDauDaGui([{ id: 'A', phienBan: con[0].phienBan }])
     expect(await d.choGui()).toEqual([])
   })
@@ -53,22 +53,16 @@ describe.each(bien)('bản đệm %s', (_ten, tao) => {
       .map((x) => ({ id: x.banGhi.id, phienBan: x.phienBan }))
     await d.danhDauDaGui(daGui)
     await d.nhanTuMayChu([moi('A', 'mới từ Sheet'), moi('B', 'bản Sheet'), moi('D', 'máy khác tạo')])
-    const ten = Object.fromEntries((await d.tatCa()).map((b) => [b.id, b.khach.ten]))
+    const ten = Object.fromEntries((await d.tatCa()).map((b) => [b.id, b.khachId]))
     expect(ten).toEqual({ A: 'mới từ Sheet', B: 'đang chờ gửi', D: 'máy khác tạo' })
   })
 
-  it('nhớ mốc đồng bộ gần nhất', async () => {
-    const d = tao()
-    expect(await d.docLanDongBoCuoi()).toBeUndefined()
-    await d.datLanDongBoCuoi(123)
-    expect(await d.docLanDongBoCuoi()).toBe(123)
-  })
 })
 
 describe('bản đệm IndexedDB', () => {
   it('còn nguyên sau khi mở lại cùng tên (như tắt rồi mở app)', async () => {
     const ten = `mo-lai-${crypto.randomUUID()}`
-    await taoBangDemIndexedDb(ten).ghi(moi('A'))
+    await taoBangDemIndexedDb<BanGhiPhieu>(ten).ghi(moi('A'))
     const lai = taoBangDemIndexedDb(ten)
     expect(await lai.tatCa()).toHaveLength(1)
     expect(await lai.choGui()).toHaveLength(1)
