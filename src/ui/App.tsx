@@ -15,6 +15,7 @@ import { docNgay, hienNgay, hienTien, homNayIso } from './dinh-dang.ts'
 import { ManNhomKhach } from './nhom-khach-ui.tsx'
 import { taoLuuNguongNhom } from '../core/nhom-khach-cai-dat.ts'
 import ManDanhSach from './ManDanhSach.tsx'
+import ManBaoCao from './ManBaoCao.tsx'
 
 const LOC: Array<NhanPhieu | 'Tất cả'> = ['Tất cả', 'Chưa tính tiền', 'Chờ trả khách', 'Đã trả', 'Đã hủy']
 const TEN_PHUONG_THUC: Record<PhuongThuc, string> = {
@@ -32,7 +33,7 @@ export default function App() {
   const dv: DichVuPhieu = he.phieu
   const [luuNguongNhom] = useState(() => taoLuuNguongNhom(localStorage))
   const [moCaiDat, setMoCaiDat] = useState(false)
-  const [man, setMan] = useState<'phieu' | 'khach' | 'nhom-khach' | 'xem-lai' | 'cai-dat'>('phieu')
+  const [man, setMan] = useState<'phieu' | 'khach' | 'nhom-khach' | 'xem-lai' | 'cai-dat' | 'bao-cao'>('phieu')
   const [ds, setDs] = useState<Phieu[]>([])
   const [loc, setLoc] = useState<NhanPhieu | 'Tất cả'>('Tất cả')
   const [loi, setLoi] = useState('')
@@ -107,10 +108,14 @@ export default function App() {
             </span>
           )}
         </button>
+        <button type="button" aria-pressed={man === 'bao-cao'} onClick={() => setMan('bao-cao')}>
+          Báo cáo
+        </button>
         <button type="button" aria-pressed={man === 'cai-dat'} onClick={() => setMan('cai-dat')}>
           Cài đặt
         </button>
       </nav>
+      {man === 'bao-cao' && <ManBaoCao phieus={ds} homNay={homNayIso()} />}
       {man === 'khach' && (
         <ManHinhKhach khach={he.khach} onDoi={() => void dv.danhSach().then(setDs)} />
       )}

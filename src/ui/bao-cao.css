@@ -1,0 +1,14 @@
+.bc { margin-top: 16px; background: #fff; border: 1px solid #d5dbe1; border-radius: 8px; padding: 12px; }
+.bc h2, .bc h3 { margin: 0 0 8px; }
+.bc h3 { margin-top: 16px; font-size: 1rem; }
+.bc-chon { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; margin-bottom: 12px; }
+.bc-kieu { display: flex; gap: 6px; }
+.bc-kieu button { background: #fff; color: #1f2933; border-color: #b6bfc8; }
+.bc-kieu button[aria-pressed="true"] { background: #1f2933; color: #fff; }
+.bc-ghi-chu { color: #52606d; font-size: 0.9rem; margin: 8px 0; }
+.bc-cuon { overflow-x: auto; }
+.bc-bang { border-collapse: collapse; width: 100%; max-width: 640px; }
+.bc-bang th, .bc-bang td { padding: 6px 8px; border-bottom: 1px solid #e4e7eb; text-align: right; white-space: nowrap; }
+.bc-bang th[scope="row"], .bc-bang thead th:first-child, .bc-bang td:first-child { text-align: left; }
+.bc-tong th, .bc-tong td { font-weight: 700; }
+@media (max-width: 480px) { .bc-bang th, .bc-bang td { padding: 6px 4px; font-size: 0.9rem; } }
