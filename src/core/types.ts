@@ -39,6 +39,8 @@ export interface BanGhiPhieu {
   thayTheCho?: string
   /** Ticket 05: phiếu này đã được thay bằng phiếu mới có mã này. */
   thayTheBoi?: string
+  /** Ticket 09: khóa ổn định của dòng sổ đã sinh ra phiếu này ("lô:mã dòng"), để nhập lại không trùng. */
+  khoaNhapLo?: string
   /** Ticket 07 gắn nhãn nguồn (vd 'nhap-sai-quy-trinh'). Báo cáo không lọc theo trường này: phiếu đã trả nào cũng tính vào thu. */
   nguon?: string
 }

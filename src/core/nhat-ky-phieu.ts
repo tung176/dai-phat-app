@@ -16,6 +16,7 @@ export type LoaiThaoTac =
   | 'xoa-mem'
   | 'lui-ngay'
   | 'thay-the'
+  | 'nhap-lo'
   | 'doi-cai-dat'
   | 'doi-nguoi-dung'
   | 'doi-dong-y-nhan-tin'

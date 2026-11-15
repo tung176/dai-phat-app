@@ -5,6 +5,7 @@ import { bangGiaGia } from '../core/bang-gia-gia.ts'
 import { taoKhoPhieuTrongBoNho } from '../core/kho-trong-bo-nho.ts'
 import { taoKhoCaiDatTrongBoNho, taoKhoNhatKyTrongBoNho } from '../core/nhat-ky-phieu.ts'
 import { taoDichVuSuaSai, type DichVuSuaSai } from '../core/sua-sai-service.ts'
+import { taoDichVuNhapLo, type DichVuNhapLo } from '../core/nhap-lo-service.ts'
 import { taoBangDemIndexedDb } from '../core/bang-dem-indexeddb.ts'
 import { taoHeKhoSheets } from '../core/kho-sheets.ts'
 import type { DongBoSheets } from '../core/dong-bo-sheets.ts'
@@ -20,6 +21,8 @@ export interface HeThongDichVu {
   khach: DichVuKhach
   /** Ticket 05: sửa, hủy, thay thế, nhật ký, rà soát. */
   suaSai: DichVuSuaSai
+  /** Ticket 09: nhập lô từ sổ. */
+  nhapLo: DichVuNhapLo
   /** Ticket 10: nhóm khách và danh sách nhắn tin. */
   nhomKhach: DichVuNhomKhach
 }
@@ -40,6 +43,7 @@ export async function taoDichVuMau(): Promise<HeThongDichVu> {
     khoNhatKy,
     khoCaiDat: taoKhoCaiDatTrongBoNho(),
   })
+  const nhapLo = taoDichVuNhapLo({ kho, phieu: dv, khach, suaSai, khoNhatKy })
   const nhomKhach = taoDichVuNhomKhach({
     khach,
     phieu: dv,
@@ -62,7 +66,7 @@ export async function taoDichVuMau(): Promise<HeThongDichVu> {
     ],
     phuThu: [{ soTien: 5000, ghiChu: '+5K' }],
   })
-  return { phieu: dv, khach, suaSai, nhomKhach }
+  return { phieu: dv, khach, suaSai, nhapLo, nhomKhach }
 }
 
 export interface KetNoiSheets {
@@ -101,13 +105,14 @@ export function taoDichVuThat(): KetNoiSheets {
       khoNhatKy: kho.nhatKyPhieu,
       khoCaiDat: kho.caiDatPhieu,
     })
+    const nhapLo = taoDichVuNhapLo({ kho: kho.phieu, phieu, khach, suaSai, khoNhatKy: kho.nhatKyPhieu })
     const nhomKhach = taoDichVuNhomKhach({
       khach,
       phieu,
       khoNhatKy: kho.nhatKyPhieu,
       nguoiHienTai: () => suaSai.nguoiHienTai(),
     })
-    ketNoi = { he: { phieu, khach, suaSai, nhomKhach }, dongBo: kho.dongBo, luu }
+    ketNoi = { he: { phieu, khach, suaSai, nhapLo, nhomKhach }, dongBo: kho.dongBo, luu }
   }
   return ketNoi
 }
