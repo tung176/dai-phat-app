@@ -12,6 +12,8 @@ import { BangSuaSai, ManCaiDatSuaSai, ManXemLai } from './sua-sai-ui.tsx'
 import { CAI_DAT_MAC_DINH, type CongTacChucNang } from '../core/nhat-ky-phieu.ts'
 import type { DichVuSuaSai } from '../core/sua-sai-service.ts'
 import { docNgay, hienNgay, hienTien, homNayIso } from './dinh-dang.ts'
+import { ManNhomKhach } from './nhom-khach-ui.tsx'
+import { taoLuuNguongNhom } from '../core/nhom-khach-cai-dat.ts'
 import ManDanhSach from './ManDanhSach.tsx'
 import ManBaoCao from './ManBaoCao.tsx'
 
@@ -29,8 +31,9 @@ export default function App() {
   const [kn] = useState<KetNoiSheets>(taoDichVuThat)
   const he = kn.he
   const dv: DichVuPhieu = he.phieu
+  const [luuNguongNhom] = useState(() => taoLuuNguongNhom(localStorage))
   const [moCaiDat, setMoCaiDat] = useState(false)
-  const [man, setMan] = useState<'phieu' | 'khach' | 'xem-lai' | 'cai-dat' | 'bao-cao'>('phieu')
+  const [man, setMan] = useState<'phieu' | 'khach' | 'nhom-khach' | 'xem-lai' | 'cai-dat' | 'bao-cao'>('phieu')
   const [ds, setDs] = useState<Phieu[]>([])
   const [loc, setLoc] = useState<NhanPhieu | 'Tất cả'>('Tất cả')
   const [loi, setLoi] = useState('')
@@ -94,6 +97,9 @@ export default function App() {
         <button type="button" aria-pressed={man === 'khach'} onClick={() => setMan('khach')}>
           Khách
         </button>
+        <button type="button" aria-pressed={man === 'nhom-khach'} onClick={() => setMan('nhom-khach')}>
+          Nhóm khách
+        </button>
         <button type="button" aria-pressed={man === 'xem-lai'} onClick={() => setMan('xem-lai')}>
           Xem lại thay đổi
           {chuaXem > 0 && (
@@ -112,6 +118,9 @@ export default function App() {
       {man === 'bao-cao' && <ManBaoCao phieus={ds} homNay={homNayIso()} />}
       {man === 'khach' && (
         <ManHinhKhach khach={he.khach} onDoi={() => void dv.danhSach().then(setDs)} />
+      )}
+      {man === 'nhom-khach' && (
+        <ManNhomKhach nhomKhach={he.nhomKhach} luuNguong={luuNguongNhom} homNay={homNayIso()} />
       )}
       {man === 'xem-lai' && <ManXemLai suaSai={he.suaSai} onDoi={() => void lamMoiGiamSat(he)} />}
       {man === 'cai-dat' && <ManCaiDatSuaSai suaSai={he.suaSai} onDoi={() => void lamMoiGiamSat(he)} />}
