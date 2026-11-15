@@ -1,17 +1,20 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import type { DauVaoNhanDo, DichVuPhieu } from '../core/phieu-service.ts'
 import { LoiNghiepVu, type NhanPhieu, type Phieu, type PhuongThuc } from '../core/types.ts'
-import { taoDichVuThat, type KetNoiSheets } from './dich-vu.ts'
+import { taoDichVuThat, type HeThongDichVu, type KetNoiSheets } from './dich-vu.ts'
 import { ChiBaoDongBo, ManCaiDat } from './cai-dat.tsx'
 import { useTrangThaiDongBo } from './dung-trang-thai-dong-bo.ts'
 import { danhSachDichVuGia } from '../core/bang-gia-gia.ts'
 import type { ChiTietTien } from '../core/tinh-tien.ts'
 import FormChotTien from './FormChotTien.tsx'
 import { ManHinhKhach } from './khach-ui.tsx'
+import { BangSuaSai, ManCaiDatSuaSai, ManXemLai } from './sua-sai-ui.tsx'
+import { CAI_DAT_MAC_DINH, type CongTacChucNang } from '../core/nhat-ky-phieu.ts'
+import type { DichVuSuaSai } from '../core/sua-sai-service.ts'
 import { docNgay, hienNgay, hienTien, homNayIso } from './dinh-dang.ts'
 import ManDanhSach from './ManDanhSach.tsx'
 
-const LOC: Array<NhanPhieu | 'Tất cả'> = ['Tất cả', 'Chưa tính tiền', 'Chờ trả khách', 'Đã trả']
+const LOC: Array<NhanPhieu | 'Tất cả'> = ['Tất cả', 'Chưa tính tiền', 'Chờ trả khách', 'Đã trả', 'Đã hủy']
 const TEN_PHUONG_THUC: Record<PhuongThuc, string> = {
   'tien-mat': 'Tiền mặt',
   'chuyen-khoan': 'Chuyển khoản',
@@ -26,19 +29,32 @@ export default function App() {
   const he = kn.he
   const dv: DichVuPhieu = he.phieu
   const [moCaiDat, setMoCaiDat] = useState(false)
-  const [man, setMan] = useState<'phieu' | 'khach'>('phieu')
+  const [man, setMan] = useState<'phieu' | 'khach' | 'xem-lai' | 'cai-dat'>('phieu')
   const [ds, setDs] = useState<Phieu[]>([])
   const [loc, setLoc] = useState<NhanPhieu | 'Tất cả'>('Tất cả')
   const [loi, setLoi] = useState('')
+  const [chuaXem, setChuaXem] = useState(0)
+  const [congTac, setCongTac] = useState<CongTacChucNang>(CAI_DAT_MAC_DINH.congTac)
+
+  const lamMoiGiamSat = useCallback(
+    (h: HeThongDichVu) =>
+      Promise.all([
+        h.suaSai.soChuaXem().then(setChuaXem),
+        h.suaSai.caiDat().then((c) => setCongTac(c.congTac)),
+      ]).then(() => undefined),
+    [],
+  )
 
   useEffect(() => {
     void dv.danhSach().then(setDs)
-  }, [dv])
+    void lamMoiGiamSat(he)
+  }, [dv, he, lamMoiGiamSat])
 
   // Kho báo có thay đổi (đồng bộ kéo bản mới về...): đọc lại danh sách từ bản đệm.
   const docLai = useCallback(() => {
     void dv.danhSach().then(setDs)
-  }, [dv])
+    void lamMoiGiamSat(he)
+  }, [dv, he, lamMoiGiamSat])
   const trangThaiDongBo = useTrangThaiDongBo(kn, docLai)
 
   const chayThaoTac = useCallback(
@@ -46,14 +62,15 @@ export default function App() {
       try {
         await viec()
         setLoi('')
-        if (dv) setDs(await dv.danhSach())
+        setDs(await he.phieu.danhSach())
+        await lamMoiGiamSat(he)
         return true
       } catch (e) {
         setLoi(thongBaoLoi(e))
         return false
       }
     },
-    [dv],
+    [he, lamMoiGiamSat],
   )
 
   const hienThi = useMemo(
@@ -76,10 +93,23 @@ export default function App() {
         <button type="button" aria-pressed={man === 'khach'} onClick={() => setMan('khach')}>
           Khách
         </button>
+        <button type="button" aria-pressed={man === 'xem-lai'} onClick={() => setMan('xem-lai')}>
+          Xem lại thay đổi
+          {chuaXem > 0 && (
+            <span className="so-chua-xem" aria-label={`${chuaXem} mục chưa xem`}>
+              {chuaXem}
+            </span>
+          )}
+        </button>
+        <button type="button" aria-pressed={man === 'cai-dat'} onClick={() => setMan('cai-dat')}>
+          Cài đặt
+        </button>
       </nav>
       {man === 'khach' && (
         <ManHinhKhach khach={he.khach} onDoi={() => void dv.danhSach().then(setDs)} />
       )}
+      {man === 'xem-lai' && <ManXemLai suaSai={he.suaSai} onDoi={() => void lamMoiGiamSat(he)} />}
+      {man === 'cai-dat' && <ManCaiDatSuaSai suaSai={he.suaSai} onDoi={() => void lamMoiGiamSat(he)} />}
       {man === 'phieu' && loi && (
         <p role="alert" className="loi">
           {loi}
@@ -103,6 +133,9 @@ export default function App() {
             <DongPhieu
               key={p.id}
               phieu={p}
+              suaSai={he.suaSai}
+              congTac={congTac}
+              chay={chayThaoTac}
               onChot={(tien, chiTiet) => chayThaoTac(() => dv.chotTien(p.id, tien, chiTiet))}
               onTra={(ngay, pt) =>
                 chayThaoTac(() => dv.traKhach(p.id, { ngayTra: ngay, phuongThuc: pt }))
@@ -111,7 +144,13 @@ export default function App() {
           ))}
         </ul>
       )}
-      {man === 'phieu' && <ManDanhSach phieus={ds} homNay={homNayIso()} />}
+      {man === 'phieu' && (
+        <ManDanhSach
+          phieus={ds}
+          homNay={homNayIso()}
+          onDongPhieu={(id, lyDo) => chayThaoTac(() => he.suaSai.huy(id, lyDo))}
+        />
+      )}
     </main>
   )
 }
@@ -182,6 +221,9 @@ function FormNhanDo(props: { onNhan: (d: DauVaoNhanDo) => Promise<boolean> }) {
 
 function DongPhieu(props: {
   phieu: Phieu
+  suaSai: DichVuSuaSai
+  congTac: CongTacChucNang
+  chay: (viec: () => Promise<unknown>) => Promise<boolean>
   onChot: (tien: number, chiTiet?: ChiTietTien) => Promise<boolean>
   onTra: (ngay: string, pt: PhuongThuc) => Promise<boolean>
 }) {
@@ -205,6 +247,13 @@ function DongPhieu(props: {
         {p.tongTien !== undefined && ` · ${hienTien(p.tongTien)}`}
         {p.ngayTra && p.phuongThuc && ` · Trả ${hienNgay(p.ngayTra)} (${TEN_PHUONG_THUC[p.phuongThuc]})`}
       </div>
+      {(p.thayTheCho || p.thayTheBoi) && (
+        <div className="phu">
+          {p.thayTheCho && `Thay thế phiếu ${p.thayTheCho}. `}
+          {p.thayTheBoi && `Đã được thay bằng phiếu ${p.thayTheBoi}.`}
+        </div>
+      )}
+      <BangSuaSai phieu={p} suaSai={props.suaSai} congTac={props.congTac} chay={props.chay} />
       {p.nhan === 'Chưa tính tiền' && (
         <FormChotTien tenKhach={p.khach.ten} bangGia={danhSachDichVuGia} onChot={props.onChot} />
       )}

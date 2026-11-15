@@ -21,12 +21,17 @@ var MIN_SECRET = 12;
 // 'Dịch vụ' và 'Dòng phiếu' đã tạo sẵn (chỉ có dòng tiêu đề) cho ticket sau; hiện chi tiết tiền nằm ở cột JSON của tab Phiếu.
 var TABS = {
   'Phiếu': ['Mã phiếu', 'Mã khách', 'Ngày nhận', 'Mô tả', 'Ghi chú', 'Tổng tiền', 'Ngày trả',
-    'Phương thức', 'Trạng thái', 'Chi tiết tiền', 'Cập nhật lúc'],
+    'Phương thức', 'Trạng thái', 'Chi tiết tiền', 'Cập nhật lúc', 'Đã xóa', 'Thay thế cho', 'Thay bằng'],
   'Khách': ['Mã khách', 'Tên', 'Vị trí', 'Số điện thoại', 'Đồng ý nhận tin', 'Nguồn', 'Ngày tạo',
     'Gộp vào', 'Cập nhật lúc'],
   'Dịch vụ': ['Mã dịch vụ', 'Tên', 'Đơn vị', 'Đơn giá', 'Cập nhật lúc'],
   'Dòng phiếu': ['Mã dòng', 'Mã phiếu', 'Mã dịch vụ', 'Số lượng', 'Đơn giá', 'Thành tiền', 'Cập nhật lúc'],
-  'Nhật ký': ['Mã', 'Ngày', 'Giữ lại', 'Gộp vào', 'Phiếu đã chuyển', 'Đã hoàn tác', 'Cập nhật lúc']
+  'Nhật ký': ['Mã', 'Ngày', 'Giữ lại', 'Gộp vào', 'Phiếu đã chuyển', 'Đã hoàn tác', 'Cập nhật lúc'],
+  // Ticket 05: nhật ký thay đổi phiếu (chỉ thêm), đánh dấu đã xem, cài đặt sửa sai.
+  'Nhật ký phiếu': ['Mã', 'Lúc', 'Ngày', 'Mã người', 'Người thực hiện', 'Loại', 'Mã phiếu', 'Phiếu liên quan',
+    'Thay đổi', 'Lý do', 'Bất thường', 'Xác thực', 'Cập nhật lúc'],
+  'Đã xem': ['Mã nhật ký', 'Mã người', 'Người xem', 'Lúc xem', 'Cập nhật lúc'],
+  'Cài đặt phiếu': ['Mã', 'Nội dung', 'Cập nhật lúc']
 };
 
 function out_(obj) {

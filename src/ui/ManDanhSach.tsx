@@ -8,6 +8,7 @@ import {
 } from '../core/danh-sach-phieu.ts'
 import type { Phieu } from '../core/types.ts'
 import { docNgay, hienNgay, hienTien } from './dinh-dang.ts'
+import { FormLyDo } from './sua-sai-ui.tsx'
 import './man-danh-sach.css'
 
 const KHOA_NGUONG = 'giat-la.nguong-canh-bao'
@@ -36,12 +37,18 @@ function luuNguong(n: NguongCanhBao): void {
 }
 
 /** Ba danh sách, màn "Đồ chưa lấy" và ô tìm phiếu. `homNay` dạng ISO, truyền vào để dễ kiểm thử. */
-export default function ManDanhSach(props: { phieus: Phieu[]; homNay: string }) {
+export default function ManDanhSach(props: {
+  phieus: Phieu[]
+  homNay: string
+  /** Đóng phiếu không còn đồ ở tiệm: hủy phiếu có lý do (ticket 05). Không truyền thì ẩn nút. */
+  onDongPhieu?: (id: string, lyDo: string) => Promise<boolean>
+}) {
   const [tab, setTab] = useState<Tab>('doChuaLay')
   const [tuKhoa, setTuKhoa] = useState('')
   const [tuNgay, setTuNgay] = useState('')
   const [denNgay, setDenNgay] = useState('')
   const [nguong, setNguong] = useState<NguongCanhBao>(docNguongDaLuu)
+  const [dangDong, setDangDong] = useState<string>()
 
   const tu = tuNgay.trim() ? docNgay(tuNgay) : undefined
   const den = denNgay.trim() ? docNgay(denNgay) : undefined
@@ -135,6 +142,19 @@ export default function ManDanhSach(props: { phieus: Phieu[]; homNay: string }) 
                     {p.ghiChu ? ` (${p.ghiChu})` : ''}
                     {p.tongTien !== undefined && ` · ${hienTien(p.tongTien)}`}
                   </div>
+                  {props.onDongPhieu && dangDong !== p.id && (
+                    <button type="button" className="phu-nut" onClick={() => setDangDong(p.id)}>
+                      Đóng phiếu {p.khach.ten}
+                    </button>
+                  )}
+                  {props.onDongPhieu && dangDong === p.id && (
+                    <FormLyDo
+                      nhan="Lý do đóng phiếu (ví dụ: khách đã lấy đồ từ lâu, không còn đồ ở tiệm)"
+                      goi="Đóng phiếu"
+                      onXacNhan={(lyDo) => props.onDongPhieu!(p.id, `Đóng phiếu: ${lyDo.trim()}`)}
+                      onDong={() => setDangDong(undefined)}
+                    />
+                  )}
                 </li>
               ))}
             </ul>

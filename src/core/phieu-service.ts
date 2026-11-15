@@ -32,10 +32,15 @@ export interface DichVuPhieu {
   /** tongTien là tổng tiền theo sổ. Có chiTiet thì lưu kèm dòng dịch vụ; chiTiet.chon = 'tinh' lấy số tính được. */
   chotTien(id: string, tongTien: number, chiTiet?: ChiTietTien): Promise<Phieu>
   traKhach(id: string, dauVao: DauVaoTraKhach): Promise<Phieu>
+  /** Phiếu chưa xóa mềm. Phiếu hủy vẫn có mặt (nhãn "Đã hủy"); báo cáo và ba danh sách tự bỏ qua. */
   danhSach(): Promise<Phieu[]>
+  /** Ticket 05: tra theo mã, kể cả phiếu đã xóa mềm (để xem lịch sử). */
+  lay(id: string): Promise<Phieu | undefined>
+  /** Ticket 05: toàn bộ kể cả phiếu đã xóa mềm. */
+  danhSachDayDu(): Promise<Phieu[]>
 }
 
-function ngayHopLe(ngay: string): boolean {
+export function ngayHopLe(ngay: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(ngay)) return false
   const d = new Date(`${ngay}T00:00:00Z`)
   return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === ngay
@@ -44,6 +49,7 @@ function ngayHopLe(ngay: string): boolean {
 const PHUONG_THUC: readonly PhuongThuc[] = ['tien-mat', 'chuyen-khoan']
 
 function nhanCua(b: BanGhiPhieu): NhanPhieu {
+  if (b.trangThai === 'da-huy') return 'Đã hủy'
   if (b.trangThai === 'da-tra') return 'Đã trả'
   return b.tongTien === undefined ? 'Chưa tính tiền' : 'Chờ trả khách'
 }
@@ -77,7 +83,7 @@ export function taoDichVuPhieu(phuThuoc: { kho: KhoPhieu; khach?: DichVuKhach })
 
   async function layHoacBao(id: string): Promise<BanGhiPhieu> {
     const b = await kho.lay(id)
-    if (!b) throw new LoiNghiepVu('KHONG_TIM_THAY', 'Không tìm thấy phiếu.')
+    if (!b || b.daXoa) throw new LoiNghiepVu('KHONG_TIM_THAY', 'Không tìm thấy phiếu.')
     return b
   }
 
@@ -144,6 +150,13 @@ export function taoDichVuPhieu(phuThuoc: { kho: KhoPhieu; khach?: DichVuKhach })
       return xemDayDu(moi)
     },
     async danhSach() {
+      return Promise.all((await kho.tatCa()).filter((b) => !b.daXoa).map(xemDayDu))
+    },
+    async lay(id) {
+      const b = await kho.lay(id)
+      return b ? xemDayDu(b) : undefined
+    },
+    async danhSachDayDu() {
       return Promise.all((await kho.tatCa()).map(xemDayDu))
     },
   }
