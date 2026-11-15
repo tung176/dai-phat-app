@@ -51,9 +51,9 @@ export function ManNhomKhach(props: { nhomKhach: DichVuNhomKhach; luuNguong: Luu
 
   async function chay(viec: () => Promise<unknown>, tin = '') {
     try {
-      await viec()
+      const r = await viec()
       setLoi('')
-      setThongBao(tin)
+      setThongBao(typeof r === 'string' ? r : tin)
       setLan((n) => n + 1)
     } catch (e) {
       setThongBao('')
@@ -75,7 +75,7 @@ export function ManNhomKhach(props: { nhomKhach: DichVuNhomKhach; luuNguong: Luu
     if (!ok) return
     void chay(async () => {
       const r = await nhomKhach.datDongYHangLoat({ nhom: chon, nguong, xacNhan: true })
-      setThongBao(`Đã tick đồng ý cho ${r.soDoi} khách.`)
+      return `Đã tick đồng ý cho ${r.soDoi} khách.`
     })
   }
 
