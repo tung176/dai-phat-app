@@ -1,16 +1,18 @@
 import type { ChiTietTien } from './tinh-tien.ts'
-import type { BanGhiPhieu, PhuongThuc, TrangThai } from './types.ts'
+import type { BanGhiPhieu, DongCu, PhuongThuc, TrangThai } from './types.ts'
 
 /**
  * Chuyển phiếu <-> dòng của tab "Phiếu" trong Sheet. Mọi ô là chữ; thứ tự cột phải khớp TABS['Phiếu'] trong apps-script/Code.gs.
  * Cột "Chi tiết tiền" là JSON của dòng dịch vụ, phụ thu, giảm giá lúc chốt tiền.
  * Cột "Cập nhật lúc" chỉ để chủ tiệm xem, app không đọc lại.
  * Ticket 05 thêm ba cột: Đã xóa (TRUE khi xóa mềm), Thay thế cho (mã phiếu cũ), Thay bằng (mã phiếu mới).
- * Ticket 09 thêm cột cuối "Khóa nhập lô" ("mã lô:mã dòng" của dòng sổ sinh ra phiếu).
+ * Ticket 09 thêm cột "Khóa nhập lô" ("mã lô:mã dòng" của dòng sổ sinh ra phiếu).
+ * Ticket 07 thêm năm cột cuối cho phiếu nhập từ KiotViet: Mã hóa đơn cũ, Mã đặt hàng cũ, Nguồn (kiotviet hoặc
+ * nhap-sai-quy-trinh), Nguồn ngày trả (gio-nhap-kiotviet), Dòng dịch vụ cũ (JSON).
  */
 export const TAB_PHIEU = 'Phiếu'
-export const SO_COT_PHIEU = 15
-/** Đọc được cả dòng cũ 11 cột (trước ticket 05) hoặc 14 cột (trước ticket 09): cột thiếu coi như trống. */
+export const SO_COT_PHIEU = 20
+/** Đọc được cả dòng cũ 11 cột (trước ticket 05), 14 cột (trước ticket 09) hoặc 15 cột (trước ticket 07): cột thiếu coi như trống. */
 const SO_COT_PHIEU_CU = 11
 
 export function sangDong(b: BanGhiPhieu, capNhatLuc: number): string[] {
@@ -30,6 +32,11 @@ export function sangDong(b: BanGhiPhieu, capNhatLuc: number): string[] {
     b.thayTheCho ?? '',
     b.thayTheBoi ?? '',
     b.khoaNhapLo ?? '',
+    b.maHoaDonCu ?? '',
+    b.maDatHangCu ?? '',
+    b.nguon ?? '',
+    b.nguonNgayTra ?? '',
+    b.dongCu === undefined ? '' : JSON.stringify(b.dongCu),
   ]
 }
 
@@ -43,15 +50,26 @@ function docChiTiet(chuoi: string): ChiTietTien | undefined {
   }
 }
 
+function docDongCu(chuoi: string): DongCu[] | undefined {
+  if (chuoi === '') return undefined
+  try {
+    const o = JSON.parse(chuoi) as DongCu[]
+    return Array.isArray(o) ? o : undefined
+  } catch {
+    return undefined
+  }
+}
+
 /** Trả undefined nếu dòng hỏng (thiếu mã, trạng thái lạ...) để bỏ qua, không làm sập app. */
 export function tuDong(d: readonly unknown[]): BanGhiPhieu | undefined {
   if (d.length < SO_COT_PHIEU_CU) return undefined
   const o = d.map((v) => (v === null || v === undefined ? '' : String(v)))
-  const [id, khachId, ngayNhan, moTa, ghiChu, tien, ngayTra, phuongThuc, trangThai, chiTiet, , daXoa, thayTheCho, thayTheBoi, khoaNhapLo] = o
+  const [id, khachId, ngayNhan, moTa, ghiChu, tien, ngayTra, phuongThuc, trangThai, chiTiet, , daXoa, thayTheCho, thayTheBoi, khoaNhapLo, maHoaDonCu, maDatHangCu, nguon, nguonNgayTra, dongCu] = o
   if (!id || !khachId || (trangThai !== 'chua-thanh-toan' && trangThai !== 'da-tra' && trangThai !== 'da-huy')) return undefined
   const tongTien = tien === '' ? undefined : Number(tien)
   if (tongTien !== undefined && !Number.isFinite(tongTien)) return undefined
   const chiTietTien = docChiTiet(chiTiet)
+  const dongCuDoc = docDongCu(dongCu ?? '')
   return {
     id,
     khachId,
@@ -67,5 +85,10 @@ export function tuDong(d: readonly unknown[]): BanGhiPhieu | undefined {
     ...(thayTheCho ? { thayTheCho } : {}),
     ...(thayTheBoi ? { thayTheBoi } : {}),
     ...(khoaNhapLo ? { khoaNhapLo } : {}),
+    ...(maHoaDonCu ? { maHoaDonCu } : {}),
+    ...(maDatHangCu ? { maDatHangCu } : {}),
+    ...(nguon ? { nguon } : {}),
+    ...(nguonNgayTra === 'gio-nhap-kiotviet' ? { nguonNgayTra } : {}),
+    ...(dongCuDoc ? { dongCu: dongCuDoc } : {}),
   }
 }

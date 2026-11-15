@@ -15,6 +15,8 @@ import type { DongCaiDatPhieu, DongDaXem, DongNhatKyPhieu } from '../core/dong-n
 import { taoDichVuNhomKhach, type DichVuNhomKhach } from '../core/nhom-khach-service.ts'
 import { taoLuuCauHinh } from '../core/luu-cau-hinh.ts'
 import { batDongBoTuDong } from './dong-bo-tu-dong.ts'
+import { taoKhoDichVuTrongBoNho, type BanGhiDichVu, type KhoDichVu } from '../core/kho-dich-vu.ts'
+import { taoDichVuNhapLichSu, type DichVuNhapLichSu } from '../core/nhap-lich-su.ts'
 
 export interface HeThongDichVu {
   phieu: DichVuPhieu
@@ -25,6 +27,9 @@ export interface HeThongDichVu {
   nhapLo: DichVuNhapLo
   /** Ticket 10: nhóm khách và danh sách nhắn tin. */
   nhomKhach: DichVuNhomKhach
+  /** Ticket 07: bảng giá dịch vụ (thực thể) và nhập lịch sử KiotViet. */
+  dichVu: KhoDichVu
+  nhapLichSu: DichVuNhapLichSu
 }
 
 /**
@@ -33,7 +38,9 @@ export interface HeThongDichVu {
  */
 export async function taoDichVuMau(): Promise<HeThongDichVu> {
   const kho = taoKhoPhieuTrongBoNho()
-  const khach = taoDichVuKhach({ khoKhach: taoKhoKhachTrongBoNho(), khoPhieu: kho })
+  const khoKhach = taoKhoKhachTrongBoNho()
+  const khoDichVu = taoKhoDichVuTrongBoNho()
+  const khach = taoDichVuKhach({ khoKhach, khoPhieu: kho })
   const dv = taoDichVuPhieu({ kho, khach })
   const khoNhatKy = taoKhoNhatKyTrongBoNho()
   const suaSai = taoDichVuSuaSai({
@@ -66,7 +73,8 @@ export async function taoDichVuMau(): Promise<HeThongDichVu> {
     ],
     phuThu: [{ soTien: 5000, ghiChu: '+5K' }],
   })
-  return { phieu: dv, khach, suaSai, nhapLo, nhomKhach }
+  const nhapLichSu = taoDichVuNhapLichSu({ khoPhieu: kho, khoKhach, khoDichVu })
+  return { phieu: dv, khach, suaSai, nhapLo, nhomKhach, dichVu: khoDichVu, nhapLichSu }
 }
 
 export interface KetNoiSheets {
@@ -93,6 +101,7 @@ export function taoDichVuThat(): KetNoiSheets {
         nhatKyPhieu: taoBangDemIndexedDb<DongNhatKyPhieu>('giat-la-dem-nhat-ky-phieu'),
         daXem: taoBangDemIndexedDb<DongDaXem>('giat-la-dem-da-xem'),
         caiDatPhieu: taoBangDemIndexedDb<DongCaiDatPhieu>('giat-la-dem-cai-dat-phieu'),
+        dichVu: taoBangDemIndexedDb<BanGhiDichVu>('giat-la-dem-dich-vu'),
       },
     })
     const khach = taoDichVuKhach({ khoKhach: kho.khach, khoPhieu: kho.phieu })
@@ -112,7 +121,8 @@ export function taoDichVuThat(): KetNoiSheets {
       khoNhatKy: kho.nhatKyPhieu,
       nguoiHienTai: () => suaSai.nguoiHienTai(),
     })
-    ketNoi = { he: { phieu, khach, suaSai, nhapLo, nhomKhach }, dongBo: kho.dongBo, luu }
+    const nhapLichSu = taoDichVuNhapLichSu({ khoPhieu: kho.phieu, khoKhach: kho.khach, khoDichVu: kho.dichVu })
+    ketNoi = { he: { phieu, khach, suaSai, nhapLo, nhomKhach, dichVu: kho.dichVu, nhapLichSu }, dongBo: kho.dongBo, luu }
   }
   return ketNoi
 }

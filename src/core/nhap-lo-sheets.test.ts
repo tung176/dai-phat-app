@@ -5,10 +5,10 @@ import type { BanGhiPhieu } from './types.ts'
 const goc: BanGhiPhieu = { id: 'P1', khachId: 'K1', ngayNhan: '2026-11-02', moTa: 'x', trangThai: 'chua-thanh-toan' }
 
 describe('khóa nhập lô trong dòng Sheets', () => {
-  it('lưu và đọc lại đúng khóa, thêm một cột cuối', () => {
+  it('lưu và đọc lại đúng khóa, cột thứ 15 (ticket 07 thêm các cột sau nó)', () => {
     const d = sangDong({ ...goc, khoaNhapLo: 'lo-thu:a' }, 1)
     expect(d).toHaveLength(SO_COT_PHIEU)
-    expect(d.at(-1)).toBe('lo-thu:a')
+    expect(d[14]).toBe('lo-thu:a')
     expect(tuDong(d)?.khoaNhapLo).toBe('lo-thu:a')
   })
 

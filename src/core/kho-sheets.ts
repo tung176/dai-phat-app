@@ -22,6 +22,8 @@ import type { BanGhiKhach, NhatKyGop } from './khach.ts'
 import type { KhoCaiDatPhieu, KhoNhatKyPhieu } from './nhat-ky-phieu.ts'
 import type { KhoKhach } from './kho-khach.ts'
 import type { KhoPhieu } from './kho-phieu.ts'
+import { TAB_DICH_VU, dichVuSangDong, dichVuTuDong } from './dong-dich-vu.ts'
+import type { BanGhiDichVu, KhoDichVu } from './kho-dich-vu.ts'
 import type { BanGhiPhieu } from './types.ts'
 
 export interface HeKhoSheets {
@@ -31,6 +33,8 @@ export interface HeKhoSheets {
   nhatKyPhieu: KhoNhatKyPhieu
   /** Ticket 05: cài đặt sửa sai (người dùng hiện tại, công tắc, ngưỡng, khóa tháng). */
   caiDatPhieu: KhoCaiDatPhieu
+  /** Ticket 07: bảng giá dịch vụ (thực thể, đồng bộ lên tab "Dịch vụ"). */
+  dichVu: KhoDichVu
   /** Một bộ đồng bộ chung cho cả phiếu, khách, nhật ký gộp: một chỉ báo trạng thái, một hàng đợi. */
   dongBo: DongBoSheets
 }
@@ -45,6 +49,8 @@ export interface TuyChonHeKhoSheets extends TuyChonDongBo {
     nhatKyPhieu?: BangDem<DongNhatKyPhieu>
     daXem?: BangDem<DongDaXem>
     caiDatPhieu?: BangDem<DongCaiDatPhieu>
+    /** Bảng của ticket 07; thiếu thì dùng bản đệm trong bộ nhớ. */
+    dichVu?: BangDem<BanGhiDichVu>
   }
   /** Sinh mã bản ghi mới; tiền tố là 'P' (phiếu), 'K' (khách), 'G' (gộp khách), 'N' (nhật ký phiếu). */
   taoId?: (tienTo: string) => string
@@ -106,8 +112,21 @@ export function taoHeKhoSheets(tuy: TuyChonHeKhoSheets): HeKhoSheets {
     tuDong: caiDatTuDong,
   })
 
+  const dichVu = dongBo.themBang({
+    tab: TAB_DICH_VU,
+    bangDem: dem.dichVu ?? taoBangDemTrongBoNho<BanGhiDichVu>(),
+    sangDong: dichVuSangDong,
+    tuDong: dichVuTuDong,
+  })
+
   return {
     dongBo,
+    dichVu: {
+      lay: (id) => dichVu.lay(id),
+      ghi: (b) => dichVu.ghi(b),
+      ghiNhieu: (bs) => dichVu.ghiNhieu(bs),
+      tatCa: () => dichVu.tatCa(),
+    },
     nhatKyPhieu: {
       async them(n) {
         const moi = { ...structuredClone(n), id: taoId('N') }
@@ -143,6 +162,7 @@ export function taoHeKhoSheets(tuy: TuyChonHeKhoSheets): HeKhoSheets {
       },
       lay: (id) => phieu.lay(id),
       ghi: (b) => phieu.ghi(b),
+      ghiNhieu: (bs) => phieu.ghiNhieu(bs),
       tatCa: () => phieu.tatCa(),
     },
     khach: {
@@ -153,6 +173,7 @@ export function taoHeKhoSheets(tuy: TuyChonHeKhoSheets): HeKhoSheets {
       },
       lay: (id) => khach.lay(id),
       ghi: (b) => khach.ghi(b),
+      ghiNhieu: (bs) => khach.ghiNhieu(bs),
       tatCa: () => khach.tatCa(),
       async themNhatKy(n) {
         const moi: NhatKyGop = { ...n, id: taoId('G') }

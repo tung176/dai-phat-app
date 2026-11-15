@@ -1,7 +1,7 @@
 /** Khách là thực thể riêng; phiếu tham chiếu khách bằng mã. Phần thuần (không I/O) của miền khách. */
 import type { NgayIso } from './types.ts'
 
-export type NguonKhach = 'nhap-tay' | 'tu-phieu' | 'nhap-so'
+export type NguonKhach = 'nhap-tay' | 'tu-phieu' | 'nhap-so' | 'kiotviet'
 export type DongYNhanTin = 'chua-hoi' | 'dong-y'
 
 /** Bản ghi lưu trữ của khách. Tên hiển thị và cờ số dùng được là giá trị suy ra, không lưu. */
@@ -16,6 +16,8 @@ export interface BanGhiKhach {
   ngayTao: NgayIso
   /** Có giá trị khi khách đã bị gộp vào khách khác (ẩn khỏi danh sách, còn để hoàn tác). */
   daGopVao?: string
+  /** Ticket 07: mã khách KiotViet, để nhập lại không nhân đôi. */
+  maCu?: string
 }
 
 export interface Khach extends BanGhiKhach {

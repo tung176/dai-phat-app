@@ -9,6 +9,7 @@ import {
   type KetQuaChiTiet,
 } from '../core/tinh-tien.ts'
 import { LoiNghiepVu } from '../core/types.ts'
+import { useNguongChenh } from './bang-gia-dung.ts'
 import { hienTien } from './dinh-dang.ts'
 
 interface DongNhap {
@@ -55,6 +56,7 @@ export default function FormChotTien({ tenKhach, bangGia, onChot }: FormChotTien
   const [lyDoGiam, setLyDoGiam] = useState('')
   const [chon, setChon] = useState<'so' | 'tinh'>('so')
 
+  const [nguongChenh] = useNguongChenh()
   const tienSo = docSo(tien)
 
   const { chiTietTien, ketQua, loi }: KetQuaXem = useMemo(() => {
@@ -82,12 +84,12 @@ export default function FormChotTien({ tenKhach, bangGia, onChot }: FormChotTien
         ...(giamGia ? { giamGia } : {}),
         chon,
       }
-      const kq = tinhChiTiet({ ...ct, ...(tienSo !== undefined ? { tongTienSo: tienSo } : {}) })
+      const kq = tinhChiTiet({ ...ct, ...(tienSo !== undefined ? { tongTienSo: tienSo } : {}) }, { nguongChenh })
       return { chiTietTien: ct, ketQua: kq }
     } catch (e) {
       return { loi: e instanceof LoiNghiepVu ? e.message : 'Dữ liệu chưa hợp lệ.' }
     }
-  }, [chiTiet, dong, phuThu, loaiGiam, giaTriGiam, lyDoGiam, chon, tienSo, bangGia])
+  }, [chiTiet, dong, phuThu, loaiGiam, giaTriGiam, lyDoGiam, chon, tienSo, bangGia, nguongChenh])
 
   function capNhatDong(i: number, phan: Partial<DongNhap>) {
     setDong(dong.map((x, j) => (j === i ? { ...x, ...phan } : x)))
@@ -130,6 +132,7 @@ export default function FormChotTien({ tenKhach, bangGia, onChot }: FormChotTien
       {chiTiet && (
         <fieldset className="chi-tiet">
           <legend>Chi tiết tiền {tenKhach}</legend>
+          {bangGia.length === 0 && (<p className="phu">Chưa có bảng giá dịch vụ. Vào màn Nhập lịch sử để nhập bảng giá.</p>)}
           {dong.map((d, i) => {
             const dv = bangGia.find((x) => x.ma === d.ma)
             return (

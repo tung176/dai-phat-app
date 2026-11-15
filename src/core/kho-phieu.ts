@@ -8,5 +8,7 @@ export interface KhoPhieu {
   them(banGhi: Omit<BanGhiPhieu, 'id'>): Promise<BanGhiPhieu>
   lay(id: string): Promise<BanGhiPhieu | undefined>
   ghi(banGhi: BanGhiPhieu): Promise<void>
+  /** Ghi nhiều bản ghi một lượt (nhập lô): bộ chuyển Sheets chỉ đồng bộ một lần. */
+  ghiNhieu?(banGhi: BanGhiPhieu[]): Promise<void>
   tatCa(): Promise<BanGhiPhieu[]>
 }

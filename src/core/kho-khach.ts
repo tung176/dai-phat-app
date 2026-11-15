@@ -5,6 +5,8 @@ export interface KhoKhach {
   them(banGhi: Omit<BanGhiKhach, 'id'>): Promise<BanGhiKhach>
   lay(id: string): Promise<BanGhiKhach | undefined>
   ghi(banGhi: BanGhiKhach): Promise<void>
+  /** Ghi nhiều bản ghi một lượt (nhập lô): bộ chuyển Sheets chỉ đồng bộ một lần. */
+  ghiNhieu?(banGhi: BanGhiKhach[]): Promise<void>
   tatCa(): Promise<BanGhiKhach[]>
   themNhatKy(nhatKy: Omit<NhatKyGop, 'id'>): Promise<NhatKyGop>
   layNhatKy(id: string): Promise<NhatKyGop | undefined>

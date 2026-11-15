@@ -24,6 +24,7 @@ export interface BanGhiPhieu {
   id: string
   /** Mã khách (ticket 04). */
   khachId: string
+  /** Phiếu nhập lịch sử mà hóa đơn không qua phiếu đặt hàng thì để chuỗi trống (chưa biết ngày nhận). */
   ngayNhan: NgayIso
   moTa: string
   ghiChu?: string
@@ -41,8 +42,27 @@ export interface BanGhiPhieu {
   thayTheBoi?: string
   /** Ticket 09: khóa ổn định của dòng sổ đã sinh ra phiếu này ("lô:mã dòng"), để nhập lại không trùng. */
   khoaNhapLo?: string
-  /** Ticket 07 gắn nhãn nguồn (vd 'nhap-sai-quy-trinh'). Báo cáo không lọc theo trường này: phiếu đã trả nào cũng tính vào thu. */
+  /**
+   * Nhãn nguồn của phiếu nhập từ KiotViet (ticket 07): "kiotviet" cho phiếu qua phiếu đặt hàng,
+   * "nhap-sai-quy-trinh" cho hóa đơn không qua phiếu đặt hàng. Báo cáo không lọc theo trường này:
+   * phiếu đã trả nào cũng tính vào thu.
+   */
   nguon?: string
+  /** Ticket 07: mã hóa đơn KiotViet (phiếu đã trả), để nhập lại không trùng. */
+  maHoaDonCu?: string
+  /** Ticket 07: mã đặt hàng KiotViet (phiếu tạm, hoặc phiếu đặt hàng gắn với hóa đơn). */
+  maDatHangCu?: string
+  /** Ticket 07: ngày trả là giờ nhập KiotViet, không phải ngày khách lấy đồ thật. */
+  nguonNgayTra?: 'gio-nhap-kiotviet'
+  /** Ticket 07: dòng hàng gốc của KiotViet (lịch sử, không dùng để tính lại tiền). */
+  dongCu?: DongCu[]
+}
+
+export interface DongCu {
+  maHang: string
+  soLuong: number
+  donGia: number
+  thanhTien: number
 }
 
 export interface Phieu extends BanGhiPhieu {
