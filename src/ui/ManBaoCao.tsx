@@ -12,8 +12,10 @@ export default function ManBaoCao(props: { phieus: Phieu[]; homNay: string }) {
   const [thang, setThang] = useState(props.homNay.slice(0, 7))
   const [ngay, setNgay] = useState(props.homNay)
 
-  const khoang = kieu === 'thang' ? khoangCuaThang(thang || props.homNay.slice(0, 7)) : khoangCuaNgay(ngay || props.homNay)
-  const bc = useMemo(() => baoCaoKy(props.phieus, khoang), [props.phieus, khoang.tuNgay, khoang.denNgay])
+  const bc = useMemo(() => {
+    const khoang = kieu === 'thang' ? khoangCuaThang(thang || props.homNay.slice(0, 7)) : khoangCuaNgay(ngay || props.homNay)
+    return baoCaoKy(props.phieus, khoang)
+  }, [props.phieus, props.homNay, kieu, thang, ngay])
 
   return (
     <section className="bc" aria-label="Báo cáo thu">
