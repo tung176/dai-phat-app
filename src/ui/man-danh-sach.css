@@ -11,3 +11,4 @@
 .mds-ngay { font-weight: 600; }
 .qua-nguong .mds-ngay { color: #b42318; }
 @media (max-width: 480px) { .mds-tim { grid-template-columns: 1fr; } .mds-nguong label { width: 100%; } }
+.xem-them { display: block; margin: 12px auto 0; }

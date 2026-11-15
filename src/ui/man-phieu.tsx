@@ -1,14 +1,12 @@
 import { useMemo, useState } from 'react'
-import { timPhieu } from '../core/danh-sach-phieu.ts'
+import { CAC_LOC_PHIEU, SO_DONG_MOI_TRANG, xemDanhSachPhieu, type LocPhieu } from '../core/danh-sach-phieu.ts'
 import type { DichVuKhach } from '../core/khach-service.ts'
 import type { DauVaoNhanDo } from '../core/phieu-service.ts'
-import type { NhanPhieu, Phieu } from '../core/types.ts'
+import type { Phieu } from '../core/types.ts'
 import { docNgay } from './dinh-dang.ts'
 import { DongPhieu, type HanhDongPhieu } from './dong-phieu-ui.tsx'
 import { FormNhanDo } from './form-nhan-do.tsx'
 import './man-danh-sach.css'
-
-const LOC: Array<NhanPhieu | 'Tất cả'> = ['Tất cả', 'Chưa tính tiền', 'Chờ trả khách', 'Đã trả', 'Đã hủy']
 
 /** Màn Phiếu: nhận đồ, và MỘT danh sách duy nhất vừa xem vừa thao tác (chốt tiền, trả khách, sửa sai, đóng phiếu). */
 export function ManPhieu(props: {
@@ -17,7 +15,8 @@ export function ManPhieu(props: {
   hanhDong: HanhDongPhieu
   onNhan: (taoDauVao: () => Promise<DauVaoNhanDo>) => Promise<boolean>
 }) {
-  const [loc, setLoc] = useState<NhanPhieu | 'Tất cả'>('Tất cả')
+  const [loc, setLoc] = useState<LocPhieu>('Còn việc')
+  const [soDong, setSoDong] = useState(SO_DONG_MOI_TRANG)
   const [tuKhoa, setTuKhoa] = useState('')
   const [tuNgay, setTuNgay] = useState('')
   const [denNgay, setDenNgay] = useState('')
@@ -26,18 +25,22 @@ export function ManPhieu(props: {
   const den = denNgay.trim() ? docNgay(denNgay) : undefined
   const loiNgay = (tuNgay.trim() && !tu) || (denNgay.trim() && !den)
 
-  const tim = useMemo(
-    () => timPhieu(props.phieus, { tuKhoa, tuNgay: tu, denNgay: den }),
-    [props.phieus, tuKhoa, tu, den],
+  // Lọc, đếm và cắt trang trong một lượt; chỉ vẽ `soDong` dòng nên gõ tìm kiếm không phải dựng cả nghìn dòng.
+  const kq = useMemo(
+    () => xemDanhSachPhieu(props.phieus, { tuKhoa, tuNgay: tu, denNgay: den, loc, soDong }),
+    [props.phieus, tuKhoa, tu, den, loc, soDong],
   )
-  const hienThi = useMemo(
-    () =>
-      tim
-        .filter((p) => loc === 'Tất cả' || p.nhan === loc)
-        .sort((a, b) => b.ngayNhan.localeCompare(a.ngayNhan) || b.id.localeCompare(a.id)),
-    [tim, loc],
-  )
-  const dem = (l: NhanPhieu | 'Tất cả') => (l === 'Tất cả' ? tim.length : tim.filter((p) => p.nhan === l).length)
+
+  /** Đổi điều kiện tìm thì quay về trang đầu. */
+  function doiTim(dat: (v: string) => void, v: string) {
+    dat(v)
+    setSoDong(SO_DONG_MOI_TRANG)
+  }
+
+  function doiLoc(l: LocPhieu) {
+    setLoc(l)
+    setSoDong(SO_DONG_MOI_TRANG)
+  }
 
   return (
     <div className="man-phieu">
@@ -47,15 +50,15 @@ export function ManPhieu(props: {
         <div className="mds-tim">
           <label>
             Tìm theo tên khách hoặc ghi chú vị trí
-            <input type="search" value={tuKhoa} onChange={(e) => setTuKhoa(e.target.value)} />
+            <input type="search" value={tuKhoa} onChange={(e) => doiTim(setTuKhoa, e.target.value)} />
           </label>
           <label>
             Nhận từ ngày (dd/mm/yyyy)
-            <input value={tuNgay} onChange={(e) => setTuNgay(e.target.value)} inputMode="numeric" />
+            <input value={tuNgay} onChange={(e) => doiTim(setTuNgay, e.target.value)} inputMode="numeric" />
           </label>
           <label>
             Đến ngày (dd/mm/yyyy)
-            <input value={denNgay} onChange={(e) => setDenNgay(e.target.value)} inputMode="numeric" />
+            <input value={denNgay} onChange={(e) => doiTim(setDenNgay, e.target.value)} inputMode="numeric" />
           </label>
         </div>
         {loiNgay && (
@@ -64,20 +67,25 @@ export function ManPhieu(props: {
           </p>
         )}
         <nav className="loc" aria-label="Lọc phiếu">
-          {LOC.map((l) => (
-            <button key={l} type="button" aria-pressed={loc === l} onClick={() => setLoc(l)}>
-              {l} ({dem(l)})
+          {CAC_LOC_PHIEU.map((l) => (
+            <button key={l} type="button" aria-pressed={loc === l} onClick={() => doiLoc(l)}>
+              {l} ({kq.dem[l]})
             </button>
           ))}
         </nav>
-        {hienThi.length === 0 ? (
+        {kq.tong === 0 ? (
           <p>{props.phieus.length === 0 ? 'Chưa có phiếu nào.' : 'Không có phiếu nào khớp.'}</p>
         ) : (
           <ul className="ds">
-            {hienThi.map((p) => (
+            {kq.hien.map((p) => (
               <DongPhieu key={p.id} phieu={p} hanhDong={props.hanhDong} />
             ))}
           </ul>
+        )}
+        {kq.conLai > 0 && (
+          <button type="button" className="xem-them" onClick={() => setSoDong(soDong + SO_DONG_MOI_TRANG)}>
+            Xem thêm {Math.min(SO_DONG_MOI_TRANG, kq.conLai)} phiếu (còn {kq.conLai})
+          </button>
         )}
       </section>
     </div>

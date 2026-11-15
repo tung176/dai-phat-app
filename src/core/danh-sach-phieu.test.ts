@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest'
-import { baDanhSach, doChuaLay, docNguong, timPhieu, NGUONG_MAC_DINH, soNgayTon } from './danh-sach-phieu.ts'
+import {
+  baDanhSach,
+  doChuaLay,
+  docNguong,
+  timPhieu,
+  xemDanhSachPhieu,
+  NGUONG_MAC_DINH,
+  soNgayTon,
+} from './danh-sach-phieu.ts'
+import { taoDuLieuGia } from './du-lieu-gia.thu.ts'
+import type { Phieu } from './types.ts'
 import { taoDichVuPhieu } from './phieu-service.ts'
 import { taoKhoPhieuTrongBoNho } from './kho-trong-bo-nho.ts'
 
@@ -129,4 +139,71 @@ describe('đọc ngưỡng đã lưu', () => {
       expect(docNguong(v)).toEqual(NGUONG_MAC_DINH)
     },
   )
+})
+
+describe('xem danh sách phiếu: lọc, đếm, dựng dần (dữ liệu giả 1.500 phiếu)', () => {
+  const dem = (ds: Phieu[], nhan: string) => ds.filter((p) => p.nhan === nhan).length
+
+  it('mặc định "Còn việc" chỉ gồm phiếu chưa tính tiền và chờ trả khách, mới nhất trước', async () => {
+    const { phieu } = await taoDuLieuGia()
+    const ds = await phieu.danhSach()
+    const kq = xemDanhSachPhieu(ds, { loc: 'Còn việc', soDong: 1000 })
+    expect(kq.hien.every((p) => p.nhan === 'Chưa tính tiền' || p.nhan === 'Chờ trả khách')).toBe(true)
+    expect(kq.tong).toBe(dem(ds, 'Chưa tính tiền') + dem(ds, 'Chờ trả khách'))
+    const ngay = kq.hien.map((p) => p.ngayNhan)
+    expect(ngay).toEqual([...ngay].sort().reverse())
+  })
+
+  it('chỉ dựng tối đa soDong dòng và báo số dòng còn lại; tăng soDong thì dựng thêm', async () => {
+    const { phieu } = await taoDuLieuGia()
+    const ds = await phieu.danhSach()
+    const trang1 = xemDanhSachPhieu(ds, { loc: 'Đã trả', soDong: 50 })
+    expect(trang1.hien).toHaveLength(50)
+    expect(trang1.conLai).toBe(dem(ds, 'Đã trả') - 50)
+    const trang2 = xemDanhSachPhieu(ds, { loc: 'Đã trả', soDong: 100 })
+    expect(trang2.hien).toHaveLength(100)
+    expect(trang2.hien.slice(0, 50).map((p) => p.id)).toEqual(trang1.hien.map((p) => p.id))
+  })
+
+  it('số đếm theo nhãn đúng với toàn bộ dữ liệu, không phụ thuộc nhãn đang lọc hay số dòng dựng', async () => {
+    const { phieu } = await taoDuLieuGia()
+    const ds = await phieu.danhSach()
+    const a = xemDanhSachPhieu(ds, { loc: 'Còn việc', soDong: 50 })
+    const b = xemDanhSachPhieu(ds, { loc: 'Đã hủy', soDong: 10 })
+    for (const kq of [a, b]) {
+      expect(kq.dem['Tất cả']).toBe(ds.length)
+      expect(kq.dem['Chưa tính tiền']).toBe(dem(ds, 'Chưa tính tiền'))
+      expect(kq.dem['Chờ trả khách']).toBe(dem(ds, 'Chờ trả khách'))
+      expect(kq.dem['Đã trả']).toBe(dem(ds, 'Đã trả'))
+      expect(kq.dem['Đã hủy']).toBe(dem(ds, 'Đã hủy'))
+      expect(kq.dem['Còn việc']).toBe(dem(ds, 'Chưa tính tiền') + dem(ds, 'Chờ trả khách'))
+    }
+  })
+
+  it('số đếm theo từ khóa và ngày; từ khóa không phân biệt dấu', async () => {
+    const { phieu } = await taoDuLieuGia()
+    const ds = await phieu.danhSach()
+    const kq = xemDanhSachPhieu(ds, { loc: 'Tất cả', soDong: 50, tuKhoa: 'phuong', tuNgay: '2025-06-01', denNgay: '2025-12-31' })
+    const doc = ds.filter(
+      (p) => (p.khach.ten.startsWith('Phương') || p.khach.ten.startsWith('Phượng')) && p.ngayNhan >= '2025-06-01' && p.ngayNhan <= '2025-12-31',
+    )
+    expect(kq.tong).toBe(doc.length)
+    expect(kq.dem['Tất cả']).toBe(doc.length)
+    expect(kq.dem['Đã trả']).toBe(dem(doc, 'Đã trả'))
+  })
+
+  it('lọc và tìm trên 1.500 phiếu dưới 200 mili giây mỗi lần gõ', async () => {
+    const { phieu } = await taoDuLieuGia()
+    const ds = await phieu.danhSach()
+    expect(ds.length).toBe(1500)
+    xemDanhSachPhieu(ds, { loc: 'Còn việc', soDong: 50 })
+    const ms: number[] = []
+    for (const tuKhoa of ['m', 'ma', 'mai', 'ph', 'phu', 'phuo', 'phuong', 'hươ', 'lan']) {
+      const bat = performance.now()
+      xemDanhSachPhieu(ds, { loc: 'Tất cả', soDong: 50, tuKhoa })
+      ms.push(performance.now() - bat)
+    }
+    expect(Math.max(...ms)).toBeLessThan(200)
+    console.info(`[đo] lọc 1.500 phiếu theo từ khóa: tối đa ${Math.max(...ms).toFixed(1)} ms`)
+  })
 })

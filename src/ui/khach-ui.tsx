@@ -1,14 +1,9 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import type { CapGoiYGop, Khach, NhatKyGop } from '../core/khach.ts'
+import type { GoiYGopTheoCum, Khach, NhatKyGop } from '../core/khach.ts'
 import type { DichVuKhach } from '../core/khach-service.ts'
 import { LoiNghiepVu } from '../core/types.ts'
 import { hienNgay } from './dinh-dang.ts'
-
-const LY_DO: Record<CapGoiYGop['lyDo'], string> = {
-  'trung-ten': 'Trùng tên (sau khi bỏ dấu, hoa thường)',
-  'doi-thu-tu-tu': 'Cùng các từ, khác thứ tự',
-  'gan-giong': 'Gần giống, có thể gõ nhầm',
-}
+import { GoiYGop } from './goi-y-gop-ui.tsx'
 
 function thongBaoLoi(e: unknown): string {
   return e instanceof LoiNghiepVu ? e.message : 'Có lỗi xảy ra, thử lại.'
@@ -18,7 +13,7 @@ export function ManHinhKhach(props: { khach: DichVuKhach; onDoi: () => void }) {
   const { khach, onDoi } = props
   const [ds, setDs] = useState<Khach[]>([])
   const [canBoSung, setCanBoSung] = useState<Khach[]>([])
-  const [goiY, setGoiY] = useState<CapGoiYGop[]>([])
+  const [goiY, setGoiY] = useState<GoiYGopTheoCum>({ canXem: [], itKhaNangTrung: [] })
   const [nhatKy, setNhatKy] = useState<NhatKyGop[]>([])
   const [tim, setTim] = useState('')
   const [loi, setLoi] = useState('')
@@ -26,21 +21,29 @@ export function ManHinhKhach(props: { khach: DichVuKhach; onDoi: () => void }) {
 
   const [lan, setLan] = useState(0)
 
+  // Danh sách khách tải lại mỗi lần gõ tìm; gợi ý gộp và các mục khác chỉ tải lại khi dữ liệu đổi (không tính lại mỗi phím).
   useEffect(() => {
     let huy = false
-    void Promise.all([khach.tim(tim), khach.canBoSung(), khach.goiYGop(), khach.nhatKyGop()]).then(
-      ([a, b, c, d]) => {
-        if (huy) return
-        setDs(a)
-        setCanBoSung(b)
-        setGoiY(c)
-        setNhatKy(d)
-      },
-    )
+    void khach.tim(tim).then((a) => {
+      if (!huy) setDs(a)
+    })
     return () => {
       huy = true
     }
   }, [khach, tim, lan])
+
+  useEffect(() => {
+    let huy = false
+    void Promise.all([khach.canBoSung(), khach.goiYGopTheoCum(), khach.nhatKyGop()]).then(([b, c, d]) => {
+      if (huy) return
+      setCanBoSung(b)
+      setGoiY(c)
+      setNhatKy(d)
+    })
+    return () => {
+      huy = true
+    }
+  }, [khach, lan])
 
   async function chay(viec: () => Promise<unknown>, tin?: string) {
     try {
@@ -91,32 +94,7 @@ export function ManHinhKhach(props: { khach: DichVuKhach; onDoi: () => void }) {
         </ul>
       )}
 
-      <h2>Gợi ý gộp khách ({goiY.length})</h2>
-      {goiY.length === 0 ? (
-        <p>Chưa thấy cặp tên nào gần giống.</p>
-      ) : (
-        <ul className="ds">
-          {goiY.map((c) => (
-            <li key={`${c.a.id}-${c.b.id}`} className="phieu">
-              <div>
-                <strong>{c.a.tenHienThi}</strong> và <strong>{c.b.tenHienThi}</strong>
-              </div>
-              <div className="phu">
-                {LY_DO[c.lyDo]}
-                {c.khacSoDienThoai && ' · hai số điện thoại khác nhau, có thể là hai người'}
-              </div>
-              <div className="hang">
-                <button type="button" onClick={() => xacNhanGop(c.a, c.b)}>
-                  Gộp vào {c.a.id}
-                </button>
-                <button type="button" onClick={() => xacNhanGop(c.b, c.a)}>
-                  Gộp vào {c.b.id}
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
+      <GoiYGop goiY={goiY} onGop={xacNhanGop} />
 
       <h2>Danh sách khách ({ds.length})</h2>
       <label>

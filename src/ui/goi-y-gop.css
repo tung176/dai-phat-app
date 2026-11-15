@@ -1,0 +1,6 @@
+.xem-them { display: block; margin: 12px auto 0; }
+.goi-y-it { margin: 12px 0; }
+.goi-y-it > summary, .goi-y-cum details > summary { cursor: pointer; font-weight: 600; padding: 6px 0; }
+.goi-y-ds-cap { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 6px; }
+.goi-y-cap { border-top: 1px solid #d5dbe1; padding-top: 6px; display: grid; gap: 4px; }
+.goi-y-khach { margin: 4px 0; padding-left: 18px; font-size: 14px; }

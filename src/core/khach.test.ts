@@ -3,6 +3,7 @@ import { taoDichVuPhieu } from './phieu-service.ts'
 import { taoKhoPhieuTrongBoNho } from './kho-trong-bo-nho.ts'
 import { taoKhoKhachTrongBoNho } from './kho-khach.ts'
 import { taoDichVuKhach } from './khach-service.ts'
+import { doGiong } from './khach.ts'
 
 function taoHeThong() {
   const kho = taoKhoPhieuTrongBoNho()
@@ -193,6 +194,91 @@ describe('gợi ý cặp tên gần giống', () => {
     expect((await khach.goiYKhop('nguyen thi lan')).map((k) => k.id)).toEqual([a.id])
     expect(await khach.goiYKhop('Phạm Thu')).toEqual([])
     expect(await khach.danhSach()).toHaveLength(2)
+  })
+})
+
+describe('gợi ý gộp theo cụm, ẩn cặp ít khả năng trùng', () => {
+  const ids = (c: { khach: Array<{ id: string }> }) => c.khach.map((k) => k.id).sort()
+
+  it('cặp mà cả hai có số hợp lệ và khác nhau chỉ nằm ở mục ít khả năng trùng', async () => {
+    const { khach } = taoHeThong()
+    await khach.them({ ten: 'Mai', soDienThoai: '0900000001' })
+    await khach.them({ ten: 'Mai', soDienThoai: '0900000002' })
+    const r = await khach.goiYGopTheoCum()
+    expect(r.canXem).toEqual([])
+    expect(r.itKhaNangTrung).toHaveLength(1)
+    expect(r.itKhaNangTrung[0]!.khach).toHaveLength(2)
+  })
+
+  it('thiếu số, số sai hoặc cùng số thì vẫn cần xem', async () => {
+    const { khach } = taoHeThong()
+    const a = await khach.them({ ten: 'Mai', soDienThoai: '0900000001' })
+    const b = await khach.them({ ten: 'Mai' })
+    const c = await khach.them({ ten: 'Hoa', soDienThoai: '0900000005' })
+    const d = await khach.them({ ten: 'Hoa', soDienThoai: '0900000005' })
+    const e = await khach.them({ ten: 'Hồng', soDienThoai: '12345' })
+    const f = await khach.them({ ten: 'Hong', soDienThoai: '0900000009' })
+    const r = await khach.goiYGopTheoCum()
+    expect(r.itKhaNangTrung).toEqual([])
+    expect(r.canXem.map(ids).sort()).toEqual([[a.id, b.id], [c.id, d.id], [e.id, f.id]].map((x) => x.sort()).sort())
+  })
+
+  it('một khách nằm trong nhiều cặp thì gom thành một cụm', async () => {
+    const { khach } = taoHeThong()
+    const k1 = await khach.them({ ten: 'Lan' })
+    const k2 = await khach.them({ ten: 'lan' })
+    const k3 = await khach.them({ ten: 'LAN', viTri: 'B5' })
+    const r = await khach.goiYGopTheoCum()
+    expect(r.canXem).toHaveLength(1)
+    expect(ids(r.canXem[0]!)).toEqual([k1.id, k2.id, k3.id].sort())
+    expect(r.canXem[0]!.cap).toHaveLength(3)
+  })
+
+  it('cụm có lý do rõ: liệt kê các lý do khác nhau, mạnh nhất trước', async () => {
+    const { khach } = taoHeThong()
+    await khach.them({ ten: 'Trần Văn Hùng' })
+    await khach.them({ ten: 'Tran Van Hung' })
+    await khach.them({ ten: 'Tran Van Hunh' })
+    const r = await khach.goiYGopTheoCum()
+    expect(r.canXem).toHaveLength(1)
+    expect(r.canXem[0]!.lyDo).toEqual(['trung-ten', 'gan-giong'])
+  })
+
+  it('cặp ít khả năng trùng không lặp lại khi hai khách đã chung một cụm cần xem', async () => {
+    const { khach } = taoHeThong()
+    const a = await khach.them({ ten: 'Mai', soDienThoai: '0900000001' })
+    const b = await khach.them({ ten: 'Mai' })
+    const c = await khach.them({ ten: 'Mai', soDienThoai: '0900000002' })
+    const r = await khach.goiYGopTheoCum()
+    expect(r.canXem.map(ids)).toEqual([[a.id, b.id, c.id].sort()])
+    expect(r.itKhaNangTrung).toEqual([])
+  })
+
+  it('hai nhóm Mai có số khác nhau không dính nhau qua cặp bị ẩn', async () => {
+    const { khach } = taoHeThong()
+    await khach.them({ ten: 'Mai', soDienThoai: '0900000001' })
+    await khach.them({ ten: 'Mai', soDienThoai: '0900000002' })
+    await khach.them({ ten: 'Mai', soDienThoai: '0900000003' })
+    const r = await khach.goiYGopTheoCum()
+    expect(r.canXem).toEqual([])
+    expect(r.itKhaNangTrung).toHaveLength(1)
+    expect(r.itKhaNangTrung[0]!.khach).toHaveLength(3)
+    expect(r.itKhaNangTrung[0]!.cap).toHaveLength(3)
+  })
+})
+
+describe('ngưỡng tên ngắn một từ', () => {
+  it('tên một từ ngắn hơn 5 ký tự không bị gợi ý chỉ vì gõ nhầm một ký tự', () => {
+    expect(doGiong('Hanh', 'Hang')).toBeUndefined()
+    expect(doGiong('Hương', 'Hườn')).toBeUndefined()
+    expect(doGiong('Mai', 'Mal')).toBeUndefined()
+  })
+
+  it('tên một từ từ 5 ký tự trở lên vẫn bắt gõ nhầm; trùng tên và nhiều từ không đổi', () => {
+    expect(doGiong('Phượng', 'Phuạng')).toBe('gan-giong')
+    expect(doGiong('Mai', 'mai')).toBe('trung-ten')
+    expect(doGiong('Phương', 'Phượng')).toBe('trung-ten')
+    expect(doGiong('Tran Van Hung', 'Tran Van Hunh')).toBe('gan-giong')
   })
 })
 

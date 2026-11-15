@@ -79,10 +79,11 @@ function cachNhauMotKyTu(a: string, b: string): boolean {
   return dai.slice(i + 1) === ngan.slice(i)
 }
 
-/** Hai tên có gần giống không (chỉ so tên gốc, không so ghi chú vị trí). */
-export function doGiong(tenA: string, tenB: string): LyDoGiong | undefined {
-  const a = chuanHoaTen(tenA)
-  const b = chuanHoaTen(tenB)
+/** Tên một từ ngắn hơn ngưỡng này (đã bỏ dấu) quá phổ biến, không gợi ý chỉ vì gõ nhầm một ký tự. */
+const DO_DAI_TOI_THIEU_TEN_MOT_TU = 5
+
+/** Như `doGiong` nhưng nhận tên đã qua `chuanHoaTen` (để so nhiều cặp mà không chuẩn hóa lại). */
+export function doGiongDaChuanHoa(a: string, b: string): LyDoGiong | undefined {
   if (a === '' || b === '') return undefined
   if (a === b) return 'trung-ten'
   const tuA = a.split(' ')
@@ -90,10 +91,80 @@ export function doGiong(tenA: string, tenB: string): LyDoGiong | undefined {
   if (tuA.length === tuB.length) {
     if ([...tuA].sort().join(' ') === [...tuB].sort().join(' ')) return 'doi-thu-tu-tu'
     // Gõ nhầm đúng một ký tự trong một từ (từ dài từ 4 ký tự trở lên), các từ còn lại giống hệt.
+    // Tên chỉ một từ thì phải từ 5 ký tự trở lên: Mai, Lan, Hạnh... quá phổ biến.
     const khac = tuA.map((t, i) => [t, tuB[i]!] as const).filter(([x, y]) => x !== y)
-    if (khac.length === 1 && khac[0]![0].length >= 4 && cachNhauMotKyTu(khac[0]![0], khac[0]![1])) {
-      return 'gan-giong'
+    const duDai = tuA.length === 1 ? DO_DAI_TOI_THIEU_TEN_MOT_TU : 4
+    if (khac.length === 1) {
+      const [x, y] = khac[0]!
+      if (Math.min(x.length, y.length) >= duDai && cachNhauMotKyTu(x, y)) return 'gan-giong'
     }
   }
   return undefined
+}
+
+/** Hai tên có gần giống không (chỉ so tên gốc, không so ghi chú vị trí). */
+export function doGiong(tenA: string, tenB: string): LyDoGiong | undefined {
+  return doGiongDaChuanHoa(chuanHoaTen(tenA), chuanHoaTen(tenB))
+}
+
+/** Nhóm các khách nối với nhau qua các cặp gợi ý (một khách nằm trong nhiều cặp thì gom lại). */
+export interface CumGoiY {
+  khach: Khach[]
+  cap: CapGoiYGop[]
+  /** Các lý do khác nhau trong cụm, mạnh nhất trước (trùng tên, đổi thứ tự từ, gần giống). */
+  lyDo: LyDoGiong[]
+}
+
+export interface GoiYGopTheoCum {
+  /** Cụm cần chủ tiệm xem. */
+  canXem: CumGoiY[]
+  /** Cụm chỉ gồm các cặp mà cả hai khách đều có số hợp lệ và khác nhau: nhiều khả năng là hai người. */
+  itKhaNangTrung: CumGoiY[]
+}
+
+const THU_TU_LY_DO: LyDoGiong[] = ['trung-ten', 'doi-thu-tu-tu', 'gan-giong']
+
+function gomCum(caps: CapGoiYGop[]): CumGoiY[] {
+  const cha = new Map<string, string>()
+  const goc = (id: string): string => {
+    let x = id
+    while (cha.get(x) !== x) {
+      const tren = cha.get(x) ?? x
+      cha.set(x, cha.get(tren) ?? tren)
+      x = tren
+    }
+    return x
+  }
+  for (const c of caps) {
+    for (const id of [c.a.id, c.b.id]) if (!cha.has(id)) cha.set(id, id)
+    cha.set(goc(c.a.id), goc(c.b.id))
+  }
+  const cum = new Map<string, { khach: Map<string, Khach>; cap: CapGoiYGop[] }>()
+  for (const c of caps) {
+    const g = goc(c.a.id)
+    const o = cum.get(g) ?? { khach: new Map<string, Khach>(), cap: [] }
+    o.khach.set(c.a.id, c.a)
+    o.khach.set(c.b.id, c.b)
+    o.cap.push(c)
+    cum.set(g, o)
+  }
+  return [...cum.values()].map(({ khach, cap }) => ({
+    khach: [...khach.values()].sort((x, y) => x.id.localeCompare(y.id)),
+    cap,
+    lyDo: THU_TU_LY_DO.filter((l) => cap.some((c) => c.lyDo === l)),
+  }))
+}
+
+/**
+ * Gom các cặp gợi ý thành cụm và tách cụm ít khả năng trùng ra khỏi mục chính.
+ * Cặp bị ẩn mà hai khách đã chung một cụm cần xem thì bỏ đi (không lặp lại ở mục ẩn).
+ */
+export function chiaGoiYGop(caps: CapGoiYGop[]): GoiYGopTheoCum {
+  const canXem = gomCum(caps.filter((c) => !c.khacSoDienThoai))
+  const cumCua = new Map<string, number>()
+  canXem.forEach((c, i) => c.khach.forEach((k) => cumCua.set(k.id, i)))
+  const bi = caps.filter(
+    (c) => c.khacSoDienThoai && (!cumCua.has(c.a.id) || cumCua.get(c.a.id) !== cumCua.get(c.b.id)),
+  )
+  return { canXem, itKhaNangTrung: gomCum(bi) }
 }

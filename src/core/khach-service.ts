@@ -1,8 +1,11 @@
 import {
   chuanHoaSoDienThoai,
   chuanHoaTen,
+  chiaGoiYGop,
   doGiong,
+  doGiongDaChuanHoa,
   tenHienThi,
+  type GoiYGopTheoCum,
   type BanGhiKhach,
   type CapGoiYGop,
   type Khach,
@@ -45,6 +48,8 @@ export interface DichVuKhach {
   canBoSung(): Promise<Khach[]>
   tim(truyVan: string): Promise<Khach[]>
   goiYGop(): Promise<CapGoiYGop[]>
+  /** Gợi ý gộp đã gom cụm; cặp hai số hợp lệ khác nhau nằm ở mục ít khả năng trùng. */
+  goiYGopTheoCum(): Promise<GoiYGopTheoCum>
   /** Khách có tên gần giống tên mới gõ, để người dùng chọn dùng lại. Không tự gán. */
   goiYKhop(tenMoi: string): Promise<Khach[]>
   gop(dauVao: DauVaoGop): Promise<{ nhatKyId: string; soPhieuChuyen: number }>
@@ -87,6 +92,28 @@ export function taoDichVuKhach(phuThuoc: {
 
   async function conHieuLuc(): Promise<Khach[]> {
     return (await khoKhach.tatCa()).filter((b) => b.daGopVao === undefined).map(xemKhach)
+  }
+
+  async function tatCaCapGoiY(): Promise<CapGoiYGop[]> {
+    const ds = await conHieuLuc()
+    // Chuẩn hóa tên một lần cho mỗi khách, không chuẩn hóa lại ở mỗi cặp.
+    const ten = ds.map((k) => chuanHoaTen(k.tenGoc))
+    const cap: CapGoiYGop[] = []
+    for (let i = 0; i < ds.length; i += 1) {
+      for (let j = i + 1; j < ds.length; j += 1) {
+        const lyDo = doGiongDaChuanHoa(ten[i]!, ten[j]!)
+        if (!lyDo) continue
+        const a = ds[i]!
+        const b = ds[j]!
+        cap.push({
+          a,
+          b,
+          lyDo,
+          khacSoDienThoai: a.dungDuocSo && b.dungDuocSo && a.soDienThoai !== b.soDienThoai,
+        })
+      }
+    }
+    return cap
   }
 
   return {
@@ -163,24 +190,10 @@ export function taoDichVuKhach(phuThuoc: {
       )
     },
 
-    async goiYGop() {
-      const ds = await conHieuLuc()
-      const cap: CapGoiYGop[] = []
-      for (let i = 0; i < ds.length; i += 1) {
-        for (let j = i + 1; j < ds.length; j += 1) {
-          const a = ds[i]!
-          const b = ds[j]!
-          const lyDo = doGiong(a.tenGoc, b.tenGoc)
-          if (!lyDo) continue
-          cap.push({
-            a,
-            b,
-            lyDo,
-            khacSoDienThoai: a.dungDuocSo && b.dungDuocSo && a.soDienThoai !== b.soDienThoai,
-          })
-        }
-      }
-      return cap
+    goiYGop: tatCaCapGoiY,
+
+    async goiYGopTheoCum() {
+      return chiaGoiYGop(await tatCaCapGoiY())
     },
 
     async goiYKhop(tenMoi) {
