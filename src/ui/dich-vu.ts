@@ -11,6 +11,7 @@ import type { DongBoSheets } from '../core/dong-bo-sheets.ts'
 import type { BanGhiKhach, NhatKyGop } from '../core/khach.ts'
 import type { BanGhiPhieu } from '../core/types.ts'
 import type { DongCaiDatPhieu, DongDaXem, DongNhatKyPhieu } from '../core/dong-nhat-ky-phieu.ts'
+import { taoDichVuNhomKhach, type DichVuNhomKhach } from '../core/nhom-khach-service.ts'
 import { taoLuuCauHinh } from '../core/luu-cau-hinh.ts'
 import { batDongBoTuDong } from './dong-bo-tu-dong.ts'
 
@@ -19,6 +20,8 @@ export interface HeThongDichVu {
   khach: DichVuKhach
   /** Ticket 05: sửa, hủy, thay thế, nhật ký, rà soát. */
   suaSai: DichVuSuaSai
+  /** Ticket 10: nhóm khách và danh sách nhắn tin. */
+  nhomKhach: DichVuNhomKhach
 }
 
 /**
@@ -29,12 +32,19 @@ export async function taoDichVuMau(): Promise<HeThongDichVu> {
   const kho = taoKhoPhieuTrongBoNho()
   const khach = taoDichVuKhach({ khoKhach: taoKhoKhachTrongBoNho(), khoPhieu: kho })
   const dv = taoDichVuPhieu({ kho, khach })
+  const khoNhatKy = taoKhoNhatKyTrongBoNho()
   const suaSai = taoDichVuSuaSai({
     kho,
     phieu: dv,
     khach,
-    khoNhatKy: taoKhoNhatKyTrongBoNho(),
+    khoNhatKy,
     khoCaiDat: taoKhoCaiDatTrongBoNho(),
+  })
+  const nhomKhach = taoDichVuNhomKhach({
+    khach,
+    phieu: dv,
+    khoNhatKy,
+    nguoiHienTai: () => suaSai.nguoiHienTai(),
   })
   await dv.nhanDo({ tenKhach: 'Khách Mẫu A', ngayNhan: '2026-11-01', moTa: '1 túi quần áo', ghiChu: 'tầng 2' })
   const b = await dv.nhanDo({ tenKhach: 'Khách Mẫu B', ngayNhan: '2026-11-02', moTa: '2 chăn' })
@@ -52,7 +62,7 @@ export async function taoDichVuMau(): Promise<HeThongDichVu> {
     ],
     phuThu: [{ soTien: 5000, ghiChu: '+5K' }],
   })
-  return { phieu: dv, khach, suaSai }
+  return { phieu: dv, khach, suaSai, nhomKhach }
 }
 
 export interface KetNoiSheets {
@@ -91,7 +101,13 @@ export function taoDichVuThat(): KetNoiSheets {
       khoNhatKy: kho.nhatKyPhieu,
       khoCaiDat: kho.caiDatPhieu,
     })
-    ketNoi = { he: { phieu, khach, suaSai }, dongBo: kho.dongBo, luu }
+    const nhomKhach = taoDichVuNhomKhach({
+      khach,
+      phieu,
+      khoNhatKy: kho.nhatKyPhieu,
+      nguoiHienTai: () => suaSai.nguoiHienTai(),
+    })
+    ketNoi = { he: { phieu, khach, suaSai, nhomKhach }, dongBo: kho.dongBo, luu }
   }
   return ketNoi
 }
