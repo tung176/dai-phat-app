@@ -4,7 +4,11 @@ import { LoiNghiepVu, type NhanPhieu, type Phieu, type PhuongThuc } from '../cor
 import { taoDichVuThat, type KetNoiSheets } from './dich-vu.ts'
 import { ChiBaoDongBo, ManCaiDat } from './cai-dat.tsx'
 import { useTrangThaiDongBo } from './dung-trang-thai-dong-bo.ts'
+import { danhSachDichVuGia } from '../core/bang-gia-gia.ts'
+import type { ChiTietTien } from '../core/tinh-tien.ts'
+import FormChotTien from './FormChotTien.tsx'
 import { docNgay, hienNgay, hienTien, homNayIso } from './dinh-dang.ts'
+import ManDanhSach from './ManDanhSach.tsx'
 
 const LOC: Array<NhanPhieu | 'Tất cả'> = ['Tất cả', 'Chưa tính tiền', 'Chờ trả khách', 'Đã trả']
 const TEN_PHUONG_THUC: Record<PhuongThuc, string> = {
@@ -83,7 +87,7 @@ export default function App() {
             <DongPhieu
               key={p.id}
               phieu={p}
-              onChot={(tien) => chayThaoTac(() => dv.chotTien(p.id, tien))}
+              onChot={(tien, chiTiet) => chayThaoTac(() => dv.chotTien(p.id, tien, chiTiet))}
               onTra={(ngay, pt) =>
                 chayThaoTac(() => dv.traKhach(p.id, { ngayTra: ngay, phuongThuc: pt }))
               }
@@ -91,6 +95,7 @@ export default function App() {
           ))}
         </ul>
       )}
+      <ManDanhSach phieus={ds} homNay={homNayIso()} />
     </main>
   )
 }
@@ -161,11 +166,10 @@ function FormNhanDo(props: { onNhan: (d: DauVaoNhanDo) => Promise<boolean> }) {
 
 function DongPhieu(props: {
   phieu: Phieu
-  onChot: (tien: number) => Promise<boolean>
+  onChot: (tien: number, chiTiet?: ChiTietTien) => Promise<boolean>
   onTra: (ngay: string, pt: PhuongThuc) => Promise<boolean>
 }) {
   const { phieu: p } = props
-  const [tien, setTien] = useState('')
   const [ngayTra, setNgayTra] = useState(hienNgay(homNayIso()))
   const [pt, setPt] = useState<PhuongThuc>('tien-mat')
   const [loiNgay, setLoiNgay] = useState('')
@@ -186,24 +190,7 @@ function DongPhieu(props: {
         {p.ngayTra && p.phuongThuc && ` · Trả ${hienNgay(p.ngayTra)} (${TEN_PHUONG_THUC[p.phuongThuc]})`}
       </div>
       {p.nhan === 'Chưa tính tiền' && (
-        <form
-          className="hang"
-          onSubmit={(e) => {
-            e.preventDefault()
-            void props.onChot(Number(tien.replace(/[.\s]/g, ''))).then((ok) => {
-              if (ok) setTien('')
-            })
-          }}
-        >
-          <input
-            aria-label={`Tổng tiền ${p.khach.ten}`}
-            value={tien}
-            onChange={(e) => setTien(e.target.value)}
-            inputMode="numeric"
-            placeholder="Tổng tiền (đ)"
-          />
-          <button type="submit">Chốt tiền</button>
-        </form>
+        <FormChotTien tenKhach={p.khach.ten} bangGia={danhSachDichVuGia} onChot={props.onChot} />
       )}
       {p.nhan === 'Chờ trả khách' && (
         <form
