@@ -5,6 +5,14 @@ import { bangGiaGia } from '../core/bang-gia-gia.ts'
 import { taoKhoPhieuTrongBoNho } from '../core/kho-trong-bo-nho.ts'
 import { taoKhoCaiDatTrongBoNho, taoKhoNhatKyTrongBoNho } from '../core/nhat-ky-phieu.ts'
 import { taoDichVuSuaSai, type DichVuSuaSai } from '../core/sua-sai-service.ts'
+import { taoBangDemIndexedDb } from '../core/bang-dem-indexeddb.ts'
+import { taoHeKhoSheets } from '../core/kho-sheets.ts'
+import type { DongBoSheets } from '../core/dong-bo-sheets.ts'
+import type { BanGhiKhach, NhatKyGop } from '../core/khach.ts'
+import type { BanGhiPhieu } from '../core/types.ts'
+import type { DongCaiDatPhieu, DongDaXem, DongNhatKyPhieu } from '../core/dong-nhat-ky-phieu.ts'
+import { taoLuuCauHinh } from '../core/luu-cau-hinh.ts'
+import { batDongBoTuDong } from './dong-bo-tu-dong.ts'
 
 export interface HeThongDichVu {
   phieu: DichVuPhieu
@@ -45,4 +53,45 @@ export async function taoDichVuMau(): Promise<HeThongDichVu> {
     phuThu: [{ soTien: 5000, ghiChu: '+5K' }],
   })
   return { phieu: dv, khach, suaSai }
+}
+
+export interface KetNoiSheets {
+  he: HeThongDichVu
+  dongBo: DongBoSheets
+  luu: ReturnType<typeof taoLuuCauHinh>
+}
+
+let ketNoi: KetNoiSheets | undefined
+
+/**
+ * Hệ thống thật: lưu trong IndexedDB của trình duyệt và đồng bộ lên Google Sheet khi đã dán mã cài đặt.
+ * Chỉ tạo một lần cho cả app (React StrictMode gọi hiệu ứng hai lần).
+ */
+export function taoDichVuThat(): KetNoiSheets {
+  if (!ketNoi) {
+    const luu = taoLuuCauHinh(localStorage)
+    const kho = taoHeKhoSheets({
+      cauHinh: () => luu.doc(),
+      bangDem: {
+        phieu: taoBangDemIndexedDb<BanGhiPhieu>('giat-la-dem-phieu'),
+        khach: taoBangDemIndexedDb<BanGhiKhach>('giat-la-dem-khach'),
+        nhatKy: taoBangDemIndexedDb<NhatKyGop>('giat-la-dem-nhat-ky'),
+        nhatKyPhieu: taoBangDemIndexedDb<DongNhatKyPhieu>('giat-la-dem-nhat-ky-phieu'),
+        daXem: taoBangDemIndexedDb<DongDaXem>('giat-la-dem-da-xem'),
+        caiDatPhieu: taoBangDemIndexedDb<DongCaiDatPhieu>('giat-la-dem-cai-dat-phieu'),
+      },
+    })
+    const khach = taoDichVuKhach({ khoKhach: kho.khach, khoPhieu: kho.phieu })
+    const phieu = taoDichVuPhieu({ kho: kho.phieu, khach })
+    batDongBoTuDong(kho.dongBo)
+    const suaSai = taoDichVuSuaSai({
+      kho: kho.phieu,
+      phieu,
+      khach,
+      khoNhatKy: kho.nhatKyPhieu,
+      khoCaiDat: kho.caiDatPhieu,
+    })
+    ketNoi = { he: { phieu, khach, suaSai }, dongBo: kho.dongBo, luu }
+  }
+  return ketNoi
 }

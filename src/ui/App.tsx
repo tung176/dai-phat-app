@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import type { DauVaoNhanDo, DichVuPhieu } from '../core/phieu-service.ts'
 import { LoiNghiepVu, type NhanPhieu, type Phieu, type PhuongThuc } from '../core/types.ts'
+import { taoDichVuThat, type HeThongDichVu, type KetNoiSheets } from './dich-vu.ts'
+import { ChiBaoDongBo, ManCaiDat } from './cai-dat.tsx'
+import { useTrangThaiDongBo } from './dung-trang-thai-dong-bo.ts'
 import { danhSachDichVuGia } from '../core/bang-gia-gia.ts'
 import type { ChiTietTien } from '../core/tinh-tien.ts'
-import { taoDichVuMau, type HeThongDichVu } from './dich-vu.ts'
 import FormChotTien from './FormChotTien.tsx'
 import { ManHinhKhach } from './khach-ui.tsx'
 import { BangSuaSai, ManCaiDatSuaSai, ManXemLai } from './sua-sai-ui.tsx'
@@ -23,8 +25,10 @@ function thongBaoLoi(e: unknown): string {
 }
 
 export default function App() {
-  const [he, setHe] = useState<HeThongDichVu>()
-  const dv: DichVuPhieu | undefined = he?.phieu
+  const [kn] = useState<KetNoiSheets>(taoDichVuThat)
+  const he = kn.he
+  const dv: DichVuPhieu = he.phieu
+  const [moCaiDat, setMoCaiDat] = useState(false)
   const [man, setMan] = useState<'phieu' | 'khach' | 'xem-lai' | 'cai-dat'>('phieu')
   const [ds, setDs] = useState<Phieu[]>([])
   const [loc, setLoc] = useState<NhanPhieu | 'Tất cả'>('Tất cả')
@@ -32,28 +36,34 @@ export default function App() {
   const [chuaXem, setChuaXem] = useState(0)
   const [congTac, setCongTac] = useState<CongTacChucNang>(CAI_DAT_MAC_DINH.congTac)
 
-  const lamMoiGiamSat = useCallback(async (h: HeThongDichVu) => {
-    setChuaXem(await h.suaSai.soChuaXem())
-    setCongTac((await h.suaSai.caiDat()).congTac)
-  }, [])
+  const lamMoiGiamSat = useCallback(
+    (h: HeThongDichVu) =>
+      Promise.all([
+        h.suaSai.soChuaXem().then(setChuaXem),
+        h.suaSai.caiDat().then((c) => setCongTac(c.congTac)),
+      ]).then(() => undefined),
+    [],
+  )
 
   useEffect(() => {
-    void taoDichVuMau().then(async (h) => {
-      setHe(h)
-      setDs(await h.phieu.danhSach())
-      await lamMoiGiamSat(h)
-    })
-  }, [lamMoiGiamSat])
+    void dv.danhSach().then(setDs)
+    void lamMoiGiamSat(he)
+  }, [dv, he, lamMoiGiamSat])
+
+  // Kho báo có thay đổi (đồng bộ kéo bản mới về...): đọc lại danh sách từ bản đệm.
+  const docLai = useCallback(() => {
+    void dv.danhSach().then(setDs)
+    void lamMoiGiamSat(he)
+  }, [dv, he, lamMoiGiamSat])
+  const trangThaiDongBo = useTrangThaiDongBo(kn, docLai)
 
   const chayThaoTac = useCallback(
     async (viec: () => Promise<unknown>): Promise<boolean> => {
       try {
         await viec()
         setLoi('')
-        if (he) {
-          setDs(await he.phieu.danhSach())
-          await lamMoiGiamSat(he)
-        }
+        setDs(await he.phieu.danhSach())
+        await lamMoiGiamSat(he)
         return true
       } catch (e) {
         setLoi(thongBaoLoi(e))
@@ -71,11 +81,11 @@ export default function App() {
     [ds, loc],
   )
 
-  if (!he || !dv) return <p className="trang">Đang tải...</p>
-
   return (
     <main className="trang">
       <h1>Đại Phát - Phiếu giặt là</h1>
+      <ChiBaoDongBo trangThai={trangThaiDongBo} onMoCaiDat={() => setMoCaiDat((m) => !m)} />
+      {moCaiDat && <ManCaiDat ketNoi={kn} onDong={() => setMoCaiDat(false)} />}
       <nav className="loc" aria-label="Màn hình">
         <button type="button" aria-pressed={man === 'phieu'} onClick={() => setMan('phieu')}>
           Phiếu
