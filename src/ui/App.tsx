@@ -3,6 +3,7 @@ import type { DauVaoNhanDo, DichVuPhieu } from '../core/phieu-service.ts'
 import { LoiNghiepVu, type NhanPhieu, type Phieu, type PhuongThuc } from '../core/types.ts'
 import { taoDichVuMau } from './dich-vu.ts'
 import { docNgay, hienNgay, hienTien, homNayIso } from './dinh-dang.ts'
+import ManDanhSach from './ManDanhSach.tsx'
 
 const LOC: Array<NhanPhieu | 'Tất cả'> = ['Tất cả', 'Chưa tính tiền', 'Chờ trả khách', 'Đã trả']
 const TEN_PHUONG_THUC: Record<PhuongThuc, string> = {
@@ -84,6 +85,7 @@ export default function App() {
           ))}
         </ul>
       )}
+      <ManDanhSach phieus={ds} homNay={homNayIso()} />
     </main>
   )
 }

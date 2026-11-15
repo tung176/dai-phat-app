@@ -1,0 +1,13 @@
+.mds { margin-top: 24px; background: #fff; border: 1px solid #d5dbe1; border-radius: 8px; padding: 12px; }
+.mds-tim { display: grid; gap: 8px; grid-template-columns: 2fr 1fr 1fr; margin-bottom: 12px; }
+.mds-tab { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.mds-tab button { background: #fff; color: #1f2933; border-color: #b6bfc8; }
+.mds-tab button[aria-pressed="true"] { background: #1f2933; color: #fff; }
+.mds-nguong { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; margin-bottom: 12px; }
+.mds-nguong label { width: 150px; }
+.mds-ds { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.mds-ds li { border: 1px solid #d5dbe1; border-left: 4px solid #9aa5b1; border-radius: 6px; padding: 8px 10px; display: grid; gap: 2px; }
+.mds-ds li.qua-nguong { border-left-color: #b42318; background: #fef3f2; }
+.mds-ngay { font-weight: 600; }
+.qua-nguong .mds-ngay { color: #b42318; }
+@media (max-width: 480px) { .mds-tim { grid-template-columns: 1fr; } .mds-nguong label { width: 100%; } }
