@@ -27,7 +27,7 @@ describe('ranh giới với KiotViet', () => {
     expect(kq.phieu[0]).toMatchObject({ loai: 'bo-qua', trungVoi: co.id })
   })
 
-  it('nhận đến 29/10, trả từ 1/11: đề xuất cặp với phiếu tạm khớp khách, ngày nhận và tiền gần đúng (60.200 so với 60.000)', async () => {
+  it('nhận đến 29/10, trả từ 31/10: đề xuất cặp với phiếu tạm khớp khách, ngày nhận và tiền gần đúng (60.200 so với 60.000)', async () => {
     const h = lap()
     const cu = await coPhieuTamCu(h)
     const xa = await coPhieuTamCu(h, { ten: 'Người Lạ' })
@@ -95,9 +95,12 @@ describe('ranh giới với KiotViet', () => {
     expect(kq.phieu[0]).toMatchObject({ loai: 'da-tra' })
   })
 
-  it('nhận cũ nhưng trả vào khoảng giữa hai mốc (31/10) thì dừng hỏi', async () => {
-    const kq = await lap().nhapLo.xemTruoc(bang({ ma: 'a', ngayNhan: '2026-10-25', tien: 60000, ngayTra: '2026-10-31', tienMat: true }))
-    expect(kq.phieu[0]).toMatchObject({ loai: 'can-hoi' })
+  it('nhận cũ, trả đúng 31/10 (ngày đầu tiên KiotViet chưa có hóa đơn): đề xuất ghép với phiếu tạm, không dừng hỏi', async () => {
+    const h = lap()
+    const cu = await coPhieuTamCu(h)
+    const kq = await h.nhapLo.xemTruoc(bang({ ma: 'a', ngayNhan: '2026-10-25', tien: 60000, ngayTra: '2026-10-31', tienMat: true }))
+    expect(kq.phieu[0]!.loai).not.toBe('can-hoi')
+    expect(kq.phieu[0]!.ghep?.ungVien.map((u) => u.phieuId)).toEqual([cu.id])
   })
 
   it('các mốc ngày và ngưỡng lệch là tham số, đổi được', async () => {

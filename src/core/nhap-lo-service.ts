@@ -29,7 +29,8 @@ export interface ThamSoNhapLo {
 export const THAM_SO_MAC_DINH: ThamSoNhapLo = {
   ngayTraDaCoDen: '2026-10-30',
   ngayNhanCuDen: '2026-10-29',
-  ngayTraMoiTu: '2026-11-01',
+  // KiotViet có hóa đơn đến hết 30/10, nên khoản trả từ 31/10 chưa có trong KiotViet.
+  ngayTraMoiTu: '2026-10-31',
   ngayNhanMoiTu: '2026-10-30',
   nguongLechTien: 500,
 }
