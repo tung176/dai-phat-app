@@ -35,7 +35,7 @@ export function ChiBaoDongBo(props: { trangThai?: TrangThaiDongBo; onMoCaiDat: (
   )
 }
 
-export function ManCaiDat(props: { ketNoi: KetNoiSheets; onDong: () => void }) {
+export function ManCaiDat(props: { ketNoi: KetNoiSheets; onDong?: () => void }) {
   const { ketNoi: kn } = props
   const [ma, setMa] = useState('')
   const [daCai, setDaCai] = useState(() => kn.luu.doc() !== null)
@@ -116,9 +116,11 @@ export function ManCaiDat(props: { ketNoi: KetNoiSheets; onDong: () => void }) {
           {loi}
         </p>
       )}
-      <button type="button" onClick={props.onDong}>
-        Đóng
-      </button>
+      {props.onDong && (
+        <button type="button" onClick={props.onDong}>
+          Đóng
+        </button>
+      )}
     </section>
   )
 }

@@ -16,6 +16,7 @@ import { taoDichVuNhomKhach, type DichVuNhomKhach } from '../core/nhom-khach-ser
 import { taoLuuCauHinh } from '../core/luu-cau-hinh.ts'
 import { batDongBoTuDong } from './dong-bo-tu-dong.ts'
 import { taoKhoDichVuTrongBoNho, type BanGhiDichVu, type KhoDichVu } from '../core/kho-dich-vu.ts'
+import { taoDichVuBangGia, type DichVuBangGia } from '../core/bang-gia-service.ts'
 import { taoDichVuNhapLichSu, type DichVuNhapLichSu } from '../core/nhap-lich-su.ts'
 
 export interface HeThongDichVu {
@@ -30,6 +31,8 @@ export interface HeThongDichVu {
   /** Ticket 07: bảng giá dịch vụ (thực thể) và nhập lịch sử KiotViet. */
   dichVu: KhoDichVu
   nhapLichSu: DichVuNhapLichSu
+  /** Ticket 14: màn Bảng giá chỉnh được. */
+  bangGia: DichVuBangGia
 }
 
 /**
@@ -74,7 +77,7 @@ export async function taoDichVuMau(): Promise<HeThongDichVu> {
     phuThu: [{ soTien: 5000, ghiChu: '+5K' }],
   })
   const nhapLichSu = taoDichVuNhapLichSu({ khoPhieu: kho, khoKhach, khoDichVu })
-  return { phieu: dv, khach, suaSai, nhapLo, nhomKhach, dichVu: khoDichVu, nhapLichSu }
+  return { phieu: dv, khach, suaSai, nhapLo, nhomKhach, dichVu: khoDichVu, nhapLichSu, bangGia: taoDichVuBangGia({ kho: khoDichVu }) }
 }
 
 export interface KetNoiSheets {
@@ -122,7 +125,11 @@ export function taoDichVuThat(): KetNoiSheets {
       nguoiHienTai: () => suaSai.nguoiHienTai(),
     })
     const nhapLichSu = taoDichVuNhapLichSu({ khoPhieu: kho.phieu, khoKhach: kho.khach, khoDichVu: kho.dichVu })
-    ketNoi = { he: { phieu, khach, suaSai, nhapLo, nhomKhach, dichVu: kho.dichVu, nhapLichSu }, dongBo: kho.dongBo, luu }
+    ketNoi = {
+      he: { phieu, khach, suaSai, nhapLo, nhomKhach, dichVu: kho.dichVu, nhapLichSu, bangGia: taoDichVuBangGia({ kho: kho.dichVu }) },
+      dongBo: kho.dongBo,
+      luu,
+    }
   }
   return ketNoi
 }

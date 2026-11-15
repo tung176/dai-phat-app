@@ -214,7 +214,11 @@ function gopDong(nhom: NhomDong): {
     if (tien === undefined) lyDoHoi.push('Có dấu thanh toán mà thiếu tiền.')
     if (ngayTra === undefined) lyDoHoi.push('Có dấu thanh toán mà thiếu ngày trả.')
   } else if (ngayTra !== undefined) {
-    canhBao.push('Có ngày trả nhưng chưa có dấu tiền mặt hay chuyển khoản: xếp vào chờ trả khách, bỏ qua ngày trả.')
+    if (tien !== undefined) {
+      lyDoHoi.push('Có tiền và ngày trả nhưng thiếu dấu tiền mặt hay chuyển khoản; cần điền dấu, không tự đoán.')
+    } else {
+      canhBao.push('Có ngày trả nhưng chưa có tiền và chưa có dấu tiền mặt hay chuyển khoản: bỏ qua ngày trả.')
+    }
   }
   return {
     ten,

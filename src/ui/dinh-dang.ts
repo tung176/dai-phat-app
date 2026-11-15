@@ -26,3 +26,10 @@ export function homNayIso(bay = new Date()): NgayIso {
   const p = (x: number) => String(x).padStart(2, '0')
   return `${bay.getFullYear()}-${p(bay.getMonth() + 1)}-${p(bay.getDate())}`
 }
+
+/** Nhãn hiện trong dòng phiếu theo trường `nguon`. Phiếu nhập tay thì không có nhãn. */
+export function nhanNguonPhieu(nguon: string | undefined): { chu: string; canhBao: boolean } | undefined {
+  if (nguon === 'nhap-sai-quy-trinh') return { chu: 'Nhập sai quy trình', canhBao: true }
+  if (nguon === 'kiotviet') return { chu: 'Từ KiotViet', canhBao: false }
+  return undefined
+}
