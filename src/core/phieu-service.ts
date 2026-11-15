@@ -1,3 +1,6 @@
+import { taoDichVuKhach, type DichVuKhach } from './khach-service.ts'
+import type { Khach } from './khach.ts'
+import { taoKhoKhachTrongBoNho } from './kho-khach.ts'
 import type { KhoPhieu } from './kho-phieu.ts'
 import {
   LoiNghiepVu,
@@ -9,7 +12,9 @@ import {
 } from './types.ts'
 
 export interface DauVaoNhanDo {
-  tenKhach: string
+  /** Nhập tên mới (tạo khách mới) hoặc truyền khachId của khách có sẵn. */
+  tenKhach?: string
+  khachId?: string
   ngayNhan: NgayIso
   moTa: string
   ghiChu?: string
@@ -41,16 +46,32 @@ function nhanCua(b: BanGhiPhieu): NhanPhieu {
   return b.tongTien === undefined ? 'Chưa tính tiền' : 'Chờ trả khách'
 }
 
-function xem(b: BanGhiPhieu): Phieu {
-  return { ...b, nhan: nhanCua(b) }
+function xem(b: BanGhiPhieu, khach: Khach): Phieu {
+  return {
+    ...b,
+    khach: {
+      id: khach.id,
+      ten: khach.tenGoc,
+      tenHienThi: khach.tenHienThi,
+      ...(khach.soDienThoai ? { soDienThoai: khach.soDienThoai } : {}),
+    },
+    nhan: nhanCua(b),
+  }
 }
 
 function batBuoc(dieuKien: boolean, thongBao: string): void {
   if (!dieuKien) throw new LoiNghiepVu('DU_LIEU_KHONG_HOP_LE', thongBao)
 }
 
-export function taoDichVuPhieu(phuThuoc: { kho: KhoPhieu }): DichVuPhieu {
+export function taoDichVuPhieu(phuThuoc: { kho: KhoPhieu; khach?: DichVuKhach }): DichVuPhieu {
   const { kho } = phuThuoc
+  const khachDv = phuThuoc.khach ?? taoDichVuKhach({ khoKhach: taoKhoKhachTrongBoNho(), khoPhieu: kho })
+
+  async function xemDayDu(b: BanGhiPhieu): Promise<Phieu> {
+    const k = await khachDv.lay(b.khachId)
+    if (!k) throw new LoiNghiepVu('KHONG_TIM_THAY', 'Không tìm thấy khách của phiếu.')
+    return xem(b, k)
+  }
 
   async function layHoacBao(id: string): Promise<BanGhiPhieu> {
     const b = await kho.lay(id)
@@ -60,21 +81,29 @@ export function taoDichVuPhieu(phuThuoc: { kho: KhoPhieu }): DichVuPhieu {
 
   return {
     async nhanDo(dauVao) {
-      const ten = dauVao.tenKhach.trim()
+      const ten = dauVao.tenKhach?.trim() ?? ''
       const moTa = dauVao.moTa.trim()
-      batBuoc(ten !== '', 'Cần nhập tên khách.')
+      batBuoc(ten !== '' || dauVao.khachId !== undefined, 'Cần nhập tên khách.')
       batBuoc(moTa !== '', 'Cần nhập mô tả đồ.')
       batBuoc(ngayHopLe(dauVao.ngayNhan), 'Ngày nhận không hợp lệ.')
-      const sdt = dauVao.soDienThoai?.trim()
+      if (dauVao.khachId !== undefined) {
+        const co = await khachDv.lay(dauVao.khachId)
+        if (!co || co.daGopVao !== undefined) {
+          throw new LoiNghiepVu('KHONG_TIM_THAY', 'Không tìm thấy khách.')
+        }
+      }
       const ghiChu = dauVao.ghiChu?.trim()
+      const khachId =
+        dauVao.khachId ??
+        (await khachDv.them({ ten, soDienThoai: dauVao.soDienThoai, nguon: 'tu-phieu' })).id
       const banGhi = await kho.them({
-        khach: { ten, ...(sdt ? { soDienThoai: sdt } : {}) },
+        khachId,
         ngayNhan: dauVao.ngayNhan,
         moTa,
         ...(ghiChu ? { ghiChu } : {}),
         trangThai: 'chua-thanh-toan',
       })
-      return xem(banGhi)
+      return xemDayDu(banGhi)
     },
     async chotTien(id, tongTien) {
       const b = await layHoacBao(id)
@@ -84,7 +113,7 @@ export function taoDichVuPhieu(phuThuoc: { kho: KhoPhieu }): DichVuPhieu {
       batBuoc(Number.isInteger(tongTien) && tongTien > 0, 'Tổng tiền phải là số đồng nguyên dương.')
       const moi: BanGhiPhieu = { ...b, tongTien }
       await kho.ghi(moi)
-      return xem(moi)
+      return xemDayDu(moi)
     },
     async traKhach(id, dauVao) {
       const b = await layHoacBao(id)
@@ -104,10 +133,10 @@ export function taoDichVuPhieu(phuThuoc: { kho: KhoPhieu }): DichVuPhieu {
         phuongThuc: dauVao.phuongThuc,
       }
       await kho.ghi(moi)
-      return xem(moi)
+      return xemDayDu(moi)
     },
     async danhSach() {
-      return (await kho.tatCa()).map(xem)
+      return Promise.all((await kho.tatCa()).map(xemDayDu))
     },
   }
 }

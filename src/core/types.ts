@@ -9,15 +9,20 @@ export type PhuongThuc = 'tien-mat' | 'chuyen-khoan'
 
 export type NhanPhieu = 'Chưa tính tiền' | 'Chờ trả khách' | 'Đã trả'
 
+/** Khung nhìn khách gắn vào phiếu (suy ra từ khách tham chiếu, không lưu trong phiếu). */
 export interface KhachTrongPhieu {
+  id: string
+  /** Tên gốc, tương thích ticket 01. */
   ten: string
+  tenHienThi: string
   soDienThoai?: string
 }
 
 /** Bản ghi lưu trữ. Nhãn là giá trị suy ra, không lưu. */
 export interface BanGhiPhieu {
   id: string
-  khach: KhachTrongPhieu
+  /** Mã khách (ticket 04). */
+  khachId: string
   ngayNhan: NgayIso
   moTa: string
   ghiChu?: string
@@ -28,6 +33,7 @@ export interface BanGhiPhieu {
 }
 
 export interface Phieu extends BanGhiPhieu {
+  khach: KhachTrongPhieu
   nhan: NhanPhieu
 }
 
