@@ -1,0 +1,7 @@
+.dong-bo { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 10px; margin-bottom: 12px; border-radius: 8px; font-size: .9rem; background: #eef1f4; border: 1px solid #d5dbe1; }
+.dong-bo button { padding: 4px 10px; background: #fff; color: #1f2933; border-color: #b6bfc8; }
+.dong-bo-da-dong-bo { background: #e6f4ee; border-color: #9ccfb8; }
+.dong-bo-cho-mang, .dong-bo-chua-cai-dat { background: #fff4db; border-color: #e5c471; }
+.dong-bo-loi { background: #fde8e6; border-color: #e3a29b; }
+.cai-dat { background: #fff; border: 1px solid #d5dbe1; border-radius: 8px; padding: 12px; margin-bottom: 16px; display: grid; gap: 8px; }
+.cai-dat textarea { font: inherit; padding: 8px; border: 1px solid #b6bfc8; border-radius: 6px; width: 100%; }

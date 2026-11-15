@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
-import type { DauVaoNhanDo, DichVuPhieu } from '../core/phieu-service.ts'
+import type { DauVaoNhanDo } from '../core/phieu-service.ts'
 import { LoiNghiepVu, type NhanPhieu, type Phieu, type PhuongThuc } from '../core/types.ts'
-import { taoDichVuMau } from './dich-vu.ts'
+import { taoDichVuThat, type KetNoiSheets } from './dich-vu.ts'
+import { ChiBaoDongBo, ManCaiDat } from './cai-dat.tsx'
+import { useTrangThaiDongBo } from './dung-trang-thai-dong-bo.ts'
 import { docNgay, hienNgay, hienTien, homNayIso } from './dinh-dang.ts'
 
 const LOC: Array<NhanPhieu | 'Tất cả'> = ['Tất cả', 'Chưa tính tiền', 'Chờ trả khách', 'Đã trả']
@@ -15,17 +17,22 @@ function thongBaoLoi(e: unknown): string {
 }
 
 export default function App() {
-  const [dv, setDv] = useState<DichVuPhieu>()
+  const [kn] = useState<KetNoiSheets>(taoDichVuThat)
+  const dv = kn.dv
+  const [moCaiDat, setMoCaiDat] = useState(false)
   const [ds, setDs] = useState<Phieu[]>([])
   const [loc, setLoc] = useState<NhanPhieu | 'Tất cả'>('Tất cả')
   const [loi, setLoi] = useState('')
 
   useEffect(() => {
-    void taoDichVuMau().then(async (d) => {
-      setDv(d)
-      setDs(await d.danhSach())
-    })
-  }, [])
+    void dv.danhSach().then(setDs)
+  }, [dv])
+
+  // Kho báo có thay đổi (đồng bộ kéo bản mới về...): đọc lại danh sách từ bản đệm.
+  const docLai = useCallback(() => {
+    void dv.danhSach().then(setDs)
+  }, [dv])
+  const trangThaiDongBo = useTrangThaiDongBo(kn, docLai)
 
   const chayThaoTac = useCallback(
     async (viec: () => Promise<unknown>): Promise<boolean> => {
@@ -50,11 +57,11 @@ export default function App() {
     [ds, loc],
   )
 
-  if (!dv) return <p className="trang">Đang tải...</p>
-
   return (
     <main className="trang">
       <h1>Đại Phát - Phiếu giặt là</h1>
+      <ChiBaoDongBo trangThai={trangThaiDongBo} onMoCaiDat={() => setMoCaiDat((m) => !m)} />
+      {moCaiDat && <ManCaiDat ketNoi={kn} onDong={() => setMoCaiDat(false)} />}
       {loi && (
         <p role="alert" className="loi">
           {loi}
