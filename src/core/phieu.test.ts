@@ -133,9 +133,9 @@ describe('trả khách', () => {
 })
 
 describe('không có đường tạo phiếu "đã trả" trực tiếp', () => {
-  it('dịch vụ chỉ có các thao tác của quy trình 3 bước', () => {
+  it('dịch vụ chỉ có các thao tác của quy trình 3 bước (cùng hai hàm chỉ đọc)', () => {
     const dv = taoDichVuThu()
-    expect(Object.keys(dv).sort()).toEqual(['chotTien', 'danhSach', 'nhanDo', 'traKhach'])
+    expect(Object.keys(dv).sort()).toEqual(['chotTien', 'danhSach', 'danhSachDayDu', 'lay', 'nhanDo', 'traKhach'])
   })
 
   it('nhận đồ bỏ qua trạng thái, tiền, ngày trả, phương thức nếu bị nhét vào', async () => {

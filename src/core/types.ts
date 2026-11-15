@@ -3,13 +3,12 @@ import type { ChiTietTien } from './tinh-tien.ts'
 /** Ngày dạng ISO "YYYY-MM-DD". Hiển thị dd/mm/yyyy là việc của lớp giao diện. */
 export type NgayIso = string
 
-export type TrangThai = 'chua-thanh-toan' | 'da-tra'
-// Ticket 05 sẽ thêm 'da-huy'.
+export type TrangThai = 'chua-thanh-toan' | 'da-tra' | 'da-huy'
 
 /** Danh mục mở rộng được: bản đầu chỉ có hai phương thức. */
 export type PhuongThuc = 'tien-mat' | 'chuyen-khoan'
 
-export type NhanPhieu = 'Chưa tính tiền' | 'Chờ trả khách' | 'Đã trả'
+export type NhanPhieu = 'Chưa tính tiền' | 'Chờ trả khách' | 'Đã trả' | 'Đã hủy'
 
 /** Khung nhìn khách gắn vào phiếu (suy ra từ khách tham chiếu, không lưu trong phiếu). */
 export interface KhachTrongPhieu {
@@ -34,6 +33,12 @@ export interface BanGhiPhieu {
   ngayTra?: NgayIso
   phuongThuc?: PhuongThuc
   trangThai: TrangThai
+  /** Ticket 05: xóa mềm. Phiếu vẫn lưu nhưng ẩn khỏi danh sách và báo cáo. */
+  daXoa?: boolean
+  /** Ticket 05: phiếu này thay thế phiếu cũ có mã này. */
+  thayTheCho?: string
+  /** Ticket 05: phiếu này đã được thay bằng phiếu mới có mã này. */
+  thayTheBoi?: string
 }
 
 export interface Phieu extends BanGhiPhieu {
@@ -45,6 +50,8 @@ export type MaLoi =
   | 'DU_LIEU_KHONG_HOP_LE'
   | 'KHONG_TIM_THAY'
   | 'SAI_TRANG_THAI'
+  | 'THIEU_LY_DO'
+  | 'CHUC_NANG_TAT'
 
 export class LoiNghiepVu extends Error {
   readonly ma: MaLoi

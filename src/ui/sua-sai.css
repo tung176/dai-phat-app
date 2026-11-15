@@ -1,0 +1,11 @@
+.sua-sai { margin-top: 6px; }
+.sua-sai-hop, .xem-lai, .cai-dat { background: #fff; border: 1px solid #d5dbe1; border-radius: 8px; padding: 10px; display: grid; gap: 8px; margin-top: 6px; }
+.phu-nut { background: #fff; color: #1f2933; border-color: #b6bfc8; }
+.ly-do { display: grid; gap: 6px; }
+.dong-chon { display: flex; gap: 8px; align-items: center; }
+fieldset { border: 1px solid #d5dbe1; border-radius: 6px; display: grid; gap: 6px; }
+.bat-thuong { color: #b42318; font-weight: 600; }
+.mds-ds li.bt-cao { border-left-color: #b42318; background: #fef3f2; }
+.mds-ds li.bt-tb { border-left-color: #d98e04; background: #fffaeb; }
+.phieu.nhan-da-huy { border-left-color: #9aa5b1; opacity: .75; }
+.so-chua-xem { background: #b42318; color: #fff; border-radius: 999px; padding: 0 8px; margin-left: 4px; font-size: .8rem; }
