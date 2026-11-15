@@ -37,6 +37,8 @@ export interface MoTaBang<T extends { id: string }> {
 /** Bảng đã đăng ký vào bộ đồng bộ: ghi vào đây là bản đệm cập nhật, hàng đợi có thêm, và bộ đồng bộ được báo. */
 export interface BangDaDangKy<T extends { id: string }> {
   ghi(b: T): Promise<void>
+  /** Ghi nhiều bản ghi rồi chỉ đồng bộ một lần (nhập lô lịch sử), thay vì mỗi bản ghi một lượt đồng bộ. */
+  ghiNhieu(bs: T[]): Promise<void>
   lay(id: string): Promise<T | undefined>
   tatCa(): Promise<T[]>
 }
@@ -160,6 +162,12 @@ export function taoDongBoSheets(tuy: TuyChonDongBo): DongBoSheets {
       return {
         async ghi(b) {
           await bangDem.ghi(b)
+          await capNhatSoCho()
+          bao()
+          if (tuDongDay) void dongBo()
+        },
+        async ghiNhieu(bs) {
+          for (const b of bs) await bangDem.ghi(b)
           await capNhatSoCho()
           bao()
           if (tuDongDay) void dongBo()

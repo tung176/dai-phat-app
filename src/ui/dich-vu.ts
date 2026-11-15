@@ -13,12 +13,17 @@ import type { BanGhiPhieu } from '../core/types.ts'
 import type { DongCaiDatPhieu, DongDaXem, DongNhatKyPhieu } from '../core/dong-nhat-ky-phieu.ts'
 import { taoLuuCauHinh } from '../core/luu-cau-hinh.ts'
 import { batDongBoTuDong } from './dong-bo-tu-dong.ts'
+import { taoKhoDichVuTrongBoNho, type BanGhiDichVu, type KhoDichVu } from '../core/kho-dich-vu.ts'
+import { taoDichVuNhapLichSu, type DichVuNhapLichSu } from '../core/nhap-lich-su.ts'
 
 export interface HeThongDichVu {
   phieu: DichVuPhieu
   khach: DichVuKhach
   /** Ticket 05: sửa, hủy, thay thế, nhật ký, rà soát. */
   suaSai: DichVuSuaSai
+  /** Ticket 07: bảng giá dịch vụ (thực thể) và nhập lịch sử KiotViet. */
+  dichVu: KhoDichVu
+  nhapLichSu: DichVuNhapLichSu
 }
 
 /**
@@ -27,7 +32,9 @@ export interface HeThongDichVu {
  */
 export async function taoDichVuMau(): Promise<HeThongDichVu> {
   const kho = taoKhoPhieuTrongBoNho()
-  const khach = taoDichVuKhach({ khoKhach: taoKhoKhachTrongBoNho(), khoPhieu: kho })
+  const khoKhach = taoKhoKhachTrongBoNho()
+  const khoDichVu = taoKhoDichVuTrongBoNho()
+  const khach = taoDichVuKhach({ khoKhach, khoPhieu: kho })
   const dv = taoDichVuPhieu({ kho, khach })
   const suaSai = taoDichVuSuaSai({
     kho,
@@ -52,7 +59,8 @@ export async function taoDichVuMau(): Promise<HeThongDichVu> {
     ],
     phuThu: [{ soTien: 5000, ghiChu: '+5K' }],
   })
-  return { phieu: dv, khach, suaSai }
+  const nhapLichSu = taoDichVuNhapLichSu({ khoPhieu: kho, khoKhach, khoDichVu })
+  return { phieu: dv, khach, suaSai, dichVu: khoDichVu, nhapLichSu }
 }
 
 export interface KetNoiSheets {
@@ -79,6 +87,7 @@ export function taoDichVuThat(): KetNoiSheets {
         nhatKyPhieu: taoBangDemIndexedDb<DongNhatKyPhieu>('giat-la-dem-nhat-ky-phieu'),
         daXem: taoBangDemIndexedDb<DongDaXem>('giat-la-dem-da-xem'),
         caiDatPhieu: taoBangDemIndexedDb<DongCaiDatPhieu>('giat-la-dem-cai-dat-phieu'),
+        dichVu: taoBangDemIndexedDb<BanGhiDichVu>('giat-la-dem-dich-vu'),
       },
     })
     const khach = taoDichVuKhach({ khoKhach: kho.khach, khoPhieu: kho.phieu })
@@ -91,7 +100,8 @@ export function taoDichVuThat(): KetNoiSheets {
       khoNhatKy: kho.nhatKyPhieu,
       khoCaiDat: kho.caiDatPhieu,
     })
-    ketNoi = { he: { phieu, khach, suaSai }, dongBo: kho.dongBo, luu }
+    const nhapLichSu = taoDichVuNhapLichSu({ khoPhieu: kho.phieu, khoKhach: kho.khach, khoDichVu: kho.dichVu })
+    ketNoi = { he: { phieu, khach, suaSai, dichVu: kho.dichVu, nhapLichSu }, dongBo: kho.dongBo, luu }
   }
   return ketNoi
 }

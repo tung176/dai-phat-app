@@ -4,7 +4,7 @@ import { createScript, type KichBanGia } from '../../tools/fakegas.mjs'
 // Kiểm thử hợp đồng của apps-script/Code.gs: chạy đúng mã đó trong môi trường Apps Script giả lập.
 const MA = `gia-${crypto.randomUUID()}`
 const hang = (id: string, khach: string, capNhat = '1') =>
-  [id, khach, '2026-11-01', 'đồ', '', '', '', '', 'chua-thanh-toan', '', capNhat, '', '', '']
+  [id, khach, '2026-11-01', 'đồ', '', '', '', '', 'chua-thanh-toan', '', capNhat, '', '', '', '', '', '', '', '']
 
 let kb: KichBanGia
 beforeEach(() => {

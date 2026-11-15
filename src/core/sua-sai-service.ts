@@ -233,7 +233,9 @@ export function taoDichVuSuaSai(phuThuoc: {
   }
 
   function kiemTraNgay(b: BanGhiPhieu): void {
-    if (!ngayHopLe(b.ngayNhan)) loi('DU_LIEU_KHONG_HOP_LE', 'Ngày nhận không hợp lệ.')
+    // Phiếu nhập lịch sử từ KiotViet có thể chưa biết ngày nhận (chuỗi trống) cho tới khi anh bổ sung.
+    const chuaBietNgayNhan = b.ngayNhan === '' && b.maHoaDonCu !== undefined
+    if (!chuaBietNgayNhan && !ngayHopLe(b.ngayNhan)) loi('DU_LIEU_KHONG_HOP_LE', 'Ngày nhận không hợp lệ.')
     if (b.ngayTra !== undefined) {
       if (!ngayHopLe(b.ngayTra)) loi('DU_LIEU_KHONG_HOP_LE', 'Ngày trả không hợp lệ.')
       if (b.ngayTra < b.ngayNhan) loi('DU_LIEU_KHONG_HOP_LE', 'Ngày trả không được trước ngày nhận.')

@@ -18,13 +18,17 @@ var MIN_SECRET = 12;
 
 // Các tab dữ liệu. Cột đầu của mỗi tab là mã bản ghi (khóa). App tạo mã ngay trên máy nên gửi lại không bị trùng.
 // Thứ tự cột khớp với src/core/dong-phieu.ts và src/core/dong-khach.ts của app. Muốn thêm cột: thêm ở CUỐI.
-// 'Dịch vụ' và 'Dòng phiếu' đã tạo sẵn (chỉ có dòng tiêu đề) cho ticket sau; hiện chi tiết tiền nằm ở cột JSON của tab Phiếu.
+// 'Dịch vụ' lưu bảng giá (ticket 07). 'Dòng phiếu' đã tạo sẵn (chỉ có dòng tiêu đề); hiện chi tiết tiền nằm ở cột JSON của tab Phiếu.
 var TABS = {
   'Phiếu': ['Mã phiếu', 'Mã khách', 'Ngày nhận', 'Mô tả', 'Ghi chú', 'Tổng tiền', 'Ngày trả',
-    'Phương thức', 'Trạng thái', 'Chi tiết tiền', 'Cập nhật lúc', 'Đã xóa', 'Thay thế cho', 'Thay bằng'],
+    'Phương thức', 'Trạng thái', 'Chi tiết tiền', 'Cập nhật lúc', 'Đã xóa', 'Thay thế cho', 'Thay bằng',
+    // Ticket 07: phiếu nhập từ KiotViet.
+    'Mã hóa đơn cũ', 'Mã đặt hàng cũ', 'Nhập sai quy trình', 'Nguồn ngày trả', 'Dòng dịch vụ cũ'],
   'Khách': ['Mã khách', 'Tên', 'Vị trí', 'Số điện thoại', 'Đồng ý nhận tin', 'Nguồn', 'Ngày tạo',
-    'Gộp vào', 'Cập nhật lúc'],
-  'Dịch vụ': ['Mã dịch vụ', 'Tên', 'Đơn vị', 'Đơn giá', 'Cập nhật lúc'],
+    'Gộp vào', 'Cập nhật lúc', 'Mã cũ'],
+  'Dịch vụ': ['Mã dịch vụ', 'Tên', 'Đơn vị', 'Đơn giá', 'Cập nhật lúc',
+    // Ticket 07: bảng giá thật (Đơn vị là 'kg' hoặc 'so-luong').
+    'Tối thiểu dưới kg', 'Tối thiểu tiền', 'Cảnh báo từ kg', 'Giá vốn', 'Mã cũ', 'Nhóm', 'Đang dùng'],
   'Dòng phiếu': ['Mã dòng', 'Mã phiếu', 'Mã dịch vụ', 'Số lượng', 'Đơn giá', 'Thành tiền', 'Cập nhật lúc'],
   'Nhật ký': ['Mã', 'Ngày', 'Giữ lại', 'Gộp vào', 'Phiếu đã chuyển', 'Đã hoàn tác', 'Cập nhật lúc'],
   // Ticket 05: nhật ký thay đổi phiếu (chỉ thêm), đánh dấu đã xem, cài đặt sửa sai.

@@ -4,7 +4,7 @@ import { LoiNghiepVu, type NhanPhieu, type Phieu, type PhuongThuc } from '../cor
 import { taoDichVuThat, type HeThongDichVu, type KetNoiSheets } from './dich-vu.ts'
 import { ChiBaoDongBo, ManCaiDat } from './cai-dat.tsx'
 import { useTrangThaiDongBo } from './dung-trang-thai-dong-bo.ts'
-import { danhSachDichVuGia } from '../core/bang-gia-gia.ts'
+import type { DichVu } from '../core/bang-gia.ts'
 import type { ChiTietTien } from '../core/tinh-tien.ts'
 import FormChotTien from './FormChotTien.tsx'
 import { ManHinhKhach } from './khach-ui.tsx'
@@ -13,6 +13,8 @@ import { CAI_DAT_MAC_DINH, type CongTacChucNang } from '../core/nhat-ky-phieu.ts
 import type { DichVuSuaSai } from '../core/sua-sai-service.ts'
 import { docNgay, hienNgay, hienTien, homNayIso } from './dinh-dang.ts'
 import ManDanhSach from './ManDanhSach.tsx'
+import { useBangGia } from './bang-gia-dung.ts'
+import { ManNhapLichSu } from './nhap-lich-su-ui.tsx'
 
 const LOC: Array<NhanPhieu | 'Tất cả'> = ['Tất cả', 'Chưa tính tiền', 'Chờ trả khách', 'Đã trả', 'Đã hủy']
 const TEN_PHUONG_THUC: Record<PhuongThuc, string> = {
@@ -27,9 +29,10 @@ function thongBaoLoi(e: unknown): string {
 export default function App() {
   const [kn] = useState<KetNoiSheets>(taoDichVuThat)
   const he = kn.he
+  const bangGia = useBangGia(kn)
   const dv: DichVuPhieu = he.phieu
   const [moCaiDat, setMoCaiDat] = useState(false)
-  const [man, setMan] = useState<'phieu' | 'khach' | 'xem-lai' | 'cai-dat'>('phieu')
+  const [man, setMan] = useState<'phieu' | 'khach' | 'xem-lai' | 'cai-dat' | 'nhap-lich-su'>('phieu')
   const [ds, setDs] = useState<Phieu[]>([])
   const [loc, setLoc] = useState<NhanPhieu | 'Tất cả'>('Tất cả')
   const [loi, setLoi] = useState('')
@@ -104,12 +107,18 @@ export default function App() {
         <button type="button" aria-pressed={man === 'cai-dat'} onClick={() => setMan('cai-dat')}>
           Cài đặt
         </button>
+        <button type="button" aria-pressed={man === 'nhap-lich-su'} onClick={() => setMan('nhap-lich-su')}>
+          Nhập lịch sử
+        </button>
       </nav>
       {man === 'khach' && (
         <ManHinhKhach khach={he.khach} onDoi={() => void dv.danhSach().then(setDs)} />
       )}
       {man === 'xem-lai' && <ManXemLai suaSai={he.suaSai} onDoi={() => void lamMoiGiamSat(he)} />}
       {man === 'cai-dat' && <ManCaiDatSuaSai suaSai={he.suaSai} onDoi={() => void lamMoiGiamSat(he)} />}
+      {man === 'nhap-lich-su' && (
+        <ManNhapLichSu nhapLichSu={he.nhapLichSu} bangGia={bangGia} onDoi={() => void dv.danhSach().then(setDs)} />
+      )}
       {man === 'phieu' && loi && (
         <p role="alert" className="loi">
           {loi}
@@ -135,6 +144,7 @@ export default function App() {
               phieu={p}
               suaSai={he.suaSai}
               congTac={congTac}
+              bangGia={bangGia}
               chay={chayThaoTac}
               onChot={(tien, chiTiet) => chayThaoTac(() => dv.chotTien(p.id, tien, chiTiet))}
               onTra={(ngay, pt) =>
@@ -223,6 +233,7 @@ function DongPhieu(props: {
   phieu: Phieu
   suaSai: DichVuSuaSai
   congTac: CongTacChucNang
+  bangGia: DichVu[]
   chay: (viec: () => Promise<unknown>) => Promise<boolean>
   onChot: (tien: number, chiTiet?: ChiTietTien) => Promise<boolean>
   onTra: (ngay: string, pt: PhuongThuc) => Promise<boolean>
@@ -255,7 +266,7 @@ function DongPhieu(props: {
       )}
       <BangSuaSai phieu={p} suaSai={props.suaSai} congTac={props.congTac} chay={props.chay} />
       {p.nhan === 'Chưa tính tiền' && (
-        <FormChotTien tenKhach={p.khach.ten} bangGia={danhSachDichVuGia} onChot={props.onChot} />
+        <FormChotTien tenKhach={p.khach.ten} bangGia={props.bangGia} onChot={props.onChot} />
       )}
       {p.nhan === 'Chờ trả khách' && (
         <form
